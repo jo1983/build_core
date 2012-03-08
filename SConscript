@@ -18,8 +18,8 @@ import os
 vars = Variables()
 
 # Common build variables
-vars.Add(EnumVariable('OS', 'Target OS', 'linux', allowed_values=('linux', 'win8', 'win7', 'winxp', 'android', 'android_donut', 'maemo', 'darwin')))
-vars.Add(EnumVariable('CPU', 'Target CPU', 'x86', allowed_values=('x86', 'x86_64', 'arm', 'armv7', 'armv7s', 'x86_bullseye')))
+vars.Add(EnumVariable('OS', 'Target OS', 'linux', allowed_values=('linux', 'win8', 'win7', 'winxp', 'android', 'android_donut', 'maemo', 'darwin', 'openwrt')))
+vars.Add(EnumVariable('CPU', 'Target CPU', 'x86', allowed_values=('x86', 'x86_64', 'arm', 'armv7', 'armv7s', 'x86_bullseye', 'openwrt')))
 vars.Add(EnumVariable('VARIANT', 'Build variant', 'debug', allowed_values=('debug', 'release', 'Debug', 'Release')))
 vars.Add(EnumVariable('BD', 'Have bundled daemon built-in for C++ test samples', 'on', allowed_values=('on', 'off')))
 vars.Add(EnumVariable('DOCS', '''Output doc type. Setting the doc type to "dev" will produce HTML 
@@ -70,7 +70,7 @@ else:
     env = Environment(variables = vars, ENV={'PATH': path})
 
 # Make it a build error to build stand alone daemon on unsupported platforms
-if env['OS'] != 'android' and env['OS'] != 'android_donut' and env['OS'] != 'linux':
+if env['OS'] != 'android' and env['OS'] != 'android_donut' and env['OS'] != 'linux' and env['OS'] != 'openwrt':
     if env['BD'] != "on":
 	    print "Stand alone daemon is not supported on OS=%s" % (env['OS'])
 	    Exit()
@@ -99,6 +99,9 @@ elif env['OS'] == 'maemo':
 elif env['OS'] == 'darwin':
     env['OS_GROUP'] = 'posix'
     env['OS_CONF'] = 'darwin'
+elif env['OS'] == 'openwrt':
+    env['OS_GROUP'] = 'posix'
+    env['OS_CONF'] = 'openwrt'
 else:
     print 'Unsupported OS/CPU combination'
     Exit()

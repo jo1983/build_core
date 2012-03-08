@@ -1,0 +1,50 @@
+# Copyright 2012, Qualcomm Innovation Center, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+
+import os
+Import('env')
+
+# OpenWRT specific vars
+vars = Variables()
+vars.Add('TARGET_PATH', 'Paths to toolchain for cross compiling AllJoyn for OpenWRT', os.environ.get('TARGET_PATH'))
+vars.Add('TARGET_CC', 'OpenWRT C compiler', os.environ.get('TARGET_CC'))
+vars.Add('TARGET_CFLAGS', 'OpenWRT C compiler flags', os.environ.get('TARGET_CFLAGS'))
+vars.Add('TARGET_CPPFLAGS', 'OpenWRT C pre-processor compiler flags', os.environ.get('TARGET_CPPFLAGS'))
+
+vars.Add('TARGET_CXX', 'OpenWRT C++ compiler', os.environ.get('TARGET_CXX'))
+
+vars.Add('TARGET_LINK', 'OpenWRT Linker', os.environ.get('TARGET_CC')) # Normally use the C compiler for linking.
+vars.Add('TARGET_LINKFLAGS', 'OpenWRT Linker flags', os.environ.get('TARGET_LDFLAGS'))
+
+vars.Add('STAGING_DIR', 'OpenWRT staging dir', os.environ.get('STAGING_DIR'))
+
+vars.Update(env)
+Help(vars.GenerateHelpText(env))
+
+
+env.Replace(CC = env['TARGET_CC'])
+env.MergeFlags(env['TARGET_CFLAGS'])
+env.MergeFlags(env['TARGET_CPPFLAGS'])
+
+env.Replace(CXX = env['TARGET_CXX'])
+
+env.Replace(LINK = env['TARGET_LINK'])
+env.MergeFlags(env['TARGET_LINKFLAGS'])
+
+env['ENV']['PATH'] = env['TARGET_PATH']
+env['ENV']['STAGING_DIR'] = env['STAGING_DIR']
+
+env.Append(CPPFLAGS=['-Wno-deprecated'])  # AllJoyn uses various deprecated template classes (i.e., hash_map)
+env.Append(CPPDEFINES=['QCC_OS_LINUX'])
