@@ -39,15 +39,18 @@ elif os.path.exists(env.subst('$ANDROID_NDK/toolchains')):
       ndkVersion = '7'
    elif (ndk_str.find('android-ndk-r8b') != -1):
       ndkVersion = '8b'
+   elif (ndk_str.find('android-ndk-r8c') != -1):
+      ndkVersion = '8c'
    elif (ndk_str.find('android-ndk-r8') != -1):
       ndkVersion = '8'
-   else: #all unknown ndks will be treated like ndk-8b
-      ndkVersion = '8b'
+   else: #all unknown ndks will be unsupported
+      print 'Unsupported Android NDK version'
+      Exit()
 else:
    print 'Cannot determine Android NDK version'
    Exit()
-vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (4 through 8b)', 
-                      ndkVersion, allowed_values=('4', '5', '6', '7', '8','8b'),  map={}, ignorecase=0))
+vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (4 through 8c)', 
+                      ndkVersion, allowed_values=('4', '5', '6', '7', '8','8b','8c'),  map={}, ignorecase=0))
 vars.Update(env)
 Help(vars.GenerateHelpText(env))
 
@@ -129,13 +132,7 @@ else:
                         '-finline-limit=64'])
 
 # Use Android provided tools
-if (env.subst('$ANDROID_NDK_VERSION') == '8b'):
-   env['ANDROID_TOOLS'] = '$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/bin'
-   env['AR'] = '$ANDROID_TOOLS/arm-linux-androideabi-ar'
-   env['CC'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
-   env['CXX'] = '$ANDROID_TOOLS/arm-linux-androideabi-g++'
-   env['LINK'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
-elif (env.subst('$ANDROID_NDK_VERSION') == '5' or 
+if (env.subst('$ANDROID_NDK_VERSION') == '5' or 
     env.subst('$ANDROID_NDK_VERSION') == '6' or
     env.subst('$ANDROID_NDK_VERSION') == '7' or
     env.subst('$ANDROID_NDK_VERSION') == '8'):
@@ -145,11 +142,11 @@ elif (env.subst('$ANDROID_NDK_VERSION') == '5' or
    env['CXX'] = '$ANDROID_TOOLS/arm-linux-androideabi-g++'
    env['LINK'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
 else:
-    env['ANDROID_TOOLS'] = '$ANDROID_NDK/build/prebuilt/$PREBUILT_HOST_OS/arm-eabi-4.4.0/bin'
-    env['AR'] = '$ANDROID_TOOLS/arm-eabi-ar'
-    env['CC'] = '$ANDROID_TOOLS/arm-eabi-gcc'
-    env['CXX'] = '$ANDROID_TOOLS/arm-eabi-g++'
-    env['LINK'] = '$ANDROID_TOOLS/arm-eabi-gcc'
+   env['ANDROID_TOOLS'] = '$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/bin'
+   env['AR'] = '$ANDROID_TOOLS/arm-linux-androideabi-ar'
+   env['CC'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
+   env['CXX'] = '$ANDROID_TOOLS/arm-linux-androideabi-g++'
+   env['LINK'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
 
 # Normalize NDK platform support (only certain ANDROID_API_LEVELs are directly supported)
 if int(env['ANDROID_API_LEVEL']) >= 14:
@@ -171,7 +168,7 @@ if (env.subst('$ANDROID_NDK_VERSION') == '5' or
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi/include',
                        '$ANDROID_SRC/external/bluetooth/bluez/include',
                        '$ANDROID_SRC/external/openssl/include'])
-elif (env.subst('$ANDROID_NDK_VERSION') == '8b'):
+else :
    env.Append(CPPPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/include',
                        #Using GNU STL.
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/include',
@@ -179,10 +176,6 @@ elif (env.subst('$ANDROID_NDK_VERSION') == '8b'):
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include',
                        '$ANDROID_SRC/external/bluetooth/bluez/include',
                        '$ANDROID_SRC/external/openssl/include'])
-else:
-    env.Append(CPPPATH=['$ANDROID_NDK/build/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/include',
-                        '$ANDROID_SRC/external/bluetooth/bluez/include',
-                        '$ANDROID_SRC/external/openssl/include'])
 
 # Android library locations
 if (env.subst('$ANDROID_NDK_VERSION') == '5' or 
@@ -206,7 +199,12 @@ elif (env.subst('$ANDROID_NDK_VERSION') == '8b'):
    env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi'])
    #append the location of the gcc library
    env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.6.x-google/'])
-
+elif (env.subst('$ANDROID_NDK_VERSION') == '8c'):
+   env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
+   #append the location of the gnustl_static library
+   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi'])
+   #append the location of the gcc library
+   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.6/'])
 else:
     env.Append(LIBPATH=['$ANDROID_NDK/build/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
     #append the location of the gcc library
@@ -228,7 +226,6 @@ if ndkVersion >= 5:
                          '--sysroot=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm',
                          '-Wl,--no-undefined',
                          '-Wl,-z,noexecstack',
-                         '-Wl,--warn-once',
                          '-Wl,-rpath-link=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
 
    # SCons default SHLINKFLAGS is '$LINKFLAGS -shared'.  Since we don't
