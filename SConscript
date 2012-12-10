@@ -139,37 +139,35 @@ import SCons.Util
 sys.path.append('tools/bin')
 import make_status
 def status_emitter(target, source, env):
-    base,ext = SCons.Util.splitext(str(target[0]))
-    target.append('inc/' + os.path.basename(base + '.h'))
-    target.append(base + 'Comment.cc') # Append target StatusComment.cc
+    base = SCons.Util.splitext(str(target[0]))[0]
+    target.append(base + '.h')
+    if env['OS_GROUP'] == 'winrt':
+        target.append(base + 'Comment.cc') # Append target StatusComment.cc
+        target.append(base + '_CPP0x.cc')
+        target.append(base + '_CPP0x.h')
     return target, source
 
 def status_action(target, source, env):
-    base,ext = SCons.Util.splitext(str(target[0]))
-    base_path, base_filename = os.path.split(base)
-    cfile = str(target[0])
-    hfile = str(target[1])
-    cfile_path, cfile_filename = os.path.split(cfile)
-    hfile_path, hfile_filename = os.path.split(hfile)    
-    cpp0x_namespace = 'AllJoyn'
-    cpp0x_cfile = os.path.join(cfile_path, "%s_CPP0x%s" % (base_filename, ext))
-    cpp0x_hfile = os.path.join(hfile_path, "%s_CPP0x.h" % base_filename)
-    comment_cfile = os.path.join(cfile_path, "%sComment%s" % (base_filename, ext))
-    base,rest = str(hfile).rsplit('inc' + os.path.sep)
-    return make_status.main(['--base=%s' % base,
-                             '--code=%s' % cfile,
-                             '--header=%s' % hfile,
-                             '--cpp0xnamespace=%s' % cpp0x_namespace,
-                             '--cpp0xcode=%s' % cpp0x_cfile,
-                             '--cpp0xheader=%s' % cpp0x_hfile,
-			     '--commentCode=%s' % comment_cfile,
-                             str(source[0])])
+    base = os.path.dirname(os.path.dirname(SCons.Util.splitext(str(target[1]))[0]))
+    cmdList = []
+    cmdList.append('--code=%s' % str(target[0]))
+    cmdList.append('--header=%s' % str(target[1]))
+    if env['OS_GROUP'] == 'winrt':
+        cmdList.append('--commentCode=%s' % str(target[2]))
+        cmdList.append('--cpp0xnamespace=AllJoyn')     ### "AllJoyn" needs to be pulled from somewhere and not hard coded here.
+        cmdList.append('--cpp0xcode=%s' % str(target[3]))
+        cmdList.append('--cpp0xheader=%s' % str(target[4]))
+    if env.has_key('STATUS_FLAGS'):
+        cmdList.extend(env['STATUS_FLAGS'])
+    cmdList.append(str(source[0]))
+    return make_status.main(cmdList)
 
 statusBuilder = Builder(action = status_action,
                         emitter = status_emitter,
                         suffix = '.cc',
                         src_suffix = '.xml')
 env.Append(BUILDERS = {'Status' : statusBuilder})
+
 
 # Read OS and CPU specific SConscript file
 Export('env')

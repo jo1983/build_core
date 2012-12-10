@@ -211,7 +211,7 @@ public enum class QStatus {""")
 
     if None != CPP0xCodeOut:
         CPP0xCodeOut.write("""
-#include "Status.h"
+#include <Status.h>
 """)
 
         CPP0xCodeOut.write("""
@@ -418,7 +418,7 @@ typedef enum {""")
         codeOut.write("""
 
 #include <stdio.h>
-#include "Status.h"
+#include <Status.h>
 
 #define CASE(_status) case _status: return #_status 
     
