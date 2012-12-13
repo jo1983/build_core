@@ -26,31 +26,27 @@ vars.Add(EnumVariable('ANDROID_API_LEVEL', ' Android API level (8, 9, 10, 14, 15
                       os.environ.get('ANDROID_API_LEVEL'), allowed_values=('8', '9', '10', '14', '15', '16', ''),  map={}, ignorecase=0))
 vars.Update(env)
 
+known_ndk_versions = [ '5',
+                       '6',
+                       '7',
+                       '8',
+                       '8b',
+                       '8c' ]
+
 # Determine Android NDK version
-if os.path.exists(env.subst('$ANDROID_NDK/build/prebuilt/$PREBUILT_HOST_OS/arm-eabi-4.4.0/bin')):
-   ndkVersion = '4'
-elif os.path.exists(env.subst('$ANDROID_NDK/toolchains')):
-   ndk_str = env.subst('$ANDROID_NDK')
-   if (ndk_str.find('android-ndk-r5') != -1):
-      ndkVersion = '5'
-   elif (ndk_str.find('android-ndk-r6') != -1):
-      ndkVersion = '6'
-   elif (ndk_str.find('android-ndk-r7') != -1):
-      ndkVersion = '7'
-   elif (ndk_str.find('android-ndk-r8b') != -1):
-      ndkVersion = '8b'
-   elif (ndk_str.find('android-ndk-r8c') != -1):
-      ndkVersion = '8c'
-   elif (ndk_str.find('android-ndk-r8') != -1):
-      ndkVersion = '8'
-   else: #all unknown ndks will be unsupported
-      print 'Unsupported Android NDK version'
-      Exit()
+if os.path.exists(env.subst('$ANDROID_NDK/RELEASE.TXT')):
+   relfile = open(os.path.join(env['ANDROID_NDK'], 'RELEASE.TXT'), 'r')
+   ndkVersion = relfile.readline().strip()[1:]
 else:
    print 'Cannot determine Android NDK version'
    Exit()
-vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (4 through 8c)', 
-                      ndkVersion, allowed_values=('4', '5', '6', '7', '8','8b','8c'),  map={}, ignorecase=0))
+
+if ndkVersion not in known_ndk_versions:
+   print 'Unsupported Android NDK version'
+   Exit()
+
+vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (5 through 8c)', 
+                      ndkVersion, allowed_values=known_ndk_versions,  map={}, ignorecase=0))
 vars.Update(env)
 Help(vars.GenerateHelpText(env))
 
@@ -67,7 +63,7 @@ if '' == env.subst('$ANDROID_TARGET'):
    env['ANDROID_TARGET'] = 'generic'
       
 if '' == env.subst('$ANDROID_API_LEVEL'):
-   env['ANDROID_API_LEVEL'] = '8'
+   env['ANDROID_API_LEVEL'] = '16'
 
 
 # Override MSVC build settings when building on windows.
@@ -121,21 +117,12 @@ env.Append(CXXFLAGS=['-fno-exceptions',
 env.Append(CPPFLAGS=['-Wall', '-pipe'])
 
 # NDK version specific flags
-if ndkVersion >= 5:
-   env.Append(CPPFLAGS=['-fno-strict-aliasing',
-                        '-funswitch-loops',
-                        '-finline-limit=300'])
-else:
-   env.Append(CPPFLAGS=['-mthumb-interwork',
-                        '-fno-short-enums',
-                        '-fno-strict-aliasing',
-                        '-finline-limit=64'])
+env.Append(CPPFLAGS=['-fno-strict-aliasing',
+                     '-funswitch-loops',
+                     '-finline-limit=300'])
 
 # Use Android provided tools
-if (env.subst('$ANDROID_NDK_VERSION') == '5' or 
-    env.subst('$ANDROID_NDK_VERSION') == '6' or
-    env.subst('$ANDROID_NDK_VERSION') == '7' or
-    env.subst('$ANDROID_NDK_VERSION') == '8'):
+if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
    env['ANDROID_TOOLS'] = '$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/bin'
    env['AR'] = '$ANDROID_TOOLS/arm-linux-androideabi-ar'
    env['CC'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
@@ -157,10 +144,7 @@ else:
    env['ANDROID_API_LEVEL_NDK'] = '8';
 
 # Android include paths
-if (env.subst('$ANDROID_NDK_VERSION') == '5' or 
-    env.subst('$ANDROID_NDK_VERSION') == '6' or
-    env.subst('$ANDROID_NDK_VERSION') == '7' or
-    env.subst('$ANDROID_NDK_VERSION') == '8'):
+if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
    env.Append(CPPPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/include',
                        #Using GNU STL.
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/include',
@@ -168,7 +152,7 @@ if (env.subst('$ANDROID_NDK_VERSION') == '5' or
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi/include',
                        '$ANDROID_SRC/external/bluetooth/bluez/include',
                        '$ANDROID_SRC/external/openssl/include'])
-else :
+else:
    env.Append(CPPPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/include',
                        #Using GNU STL.
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/include',
@@ -177,40 +161,19 @@ else :
                        '$ANDROID_SRC/external/bluetooth/bluez/include',
                        '$ANDROID_SRC/external/openssl/include'])
 
+
+
 # Android library locations
-if (env.subst('$ANDROID_NDK_VERSION') == '5' or 
-    env.subst('$ANDROID_NDK_VERSION') == '6'):
-   #append the location of the libstdc++ library
-   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi'])
-   
-   env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
-   #append the location of the gcc library
-   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.4.3/'])
-elif (env.subst('$ANDROID_NDK_VERSION') == '7' or 
-      env.subst('$ANDROID_NDK_VERSION') == '8'):
-   env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
-   #append the location of the gnustl_static library
-   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi'])
-   #append the location of the gcc library
-   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.4.3/'])
-elif (env.subst('$ANDROID_NDK_VERSION') == '8b'):
-   env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
-   #append the location of the gnustl_static library
-   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi'])
-   #append the location of the gcc library
-   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.6.x-google/'])
-elif (env.subst('$ANDROID_NDK_VERSION') == '8c'):
-   env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
-   #append the location of the gnustl_static library
-   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi'])
-   #append the location of the gcc library
-   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.6/'])
-else:
-    env.Append(LIBPATH=['$ANDROID_NDK/build/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
-    #append the location of the gcc library
-    env.Append(LIBPATH=['$ANDROID_NDK/build/prebuilt/$PREBUILT_HOST_OS/arm-eabi-4.4.0/lib/gcc/arm-eabi/4.4.0/'])
-    
+env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
 env.Append(LIBPATH=['$ANDROID_SRC/out/target/product/$ANDROID_TARGET/system/lib'])
+
+if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
+   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi'])
+   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.4.3/'])
+else:
+   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi'])
+   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.6.x-google/'])
+    
 
 
 # Add Android SDK lib to CLASSPATH
@@ -219,68 +182,33 @@ if '' != env.subst('$ANDROID_SDK'):
    env['JAVACLASSPATH'] = env['ENV']['JAVACLASSPATH']
 
 # Android link flags
-if ndkVersion >= 5:
-   env.Append(CXXFLAGS=['-Wno-deprecated'])
-   env.Append(LINKFLAGS=['-Wl,--gc-sections',
-                         '-Wl,-z,nocopyreloc',
-                         '--sysroot=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm',
-                         '-Wl,--no-undefined',
-                         '-Wl,-z,noexecstack',
-                         '-Wl,-rpath-link=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
+env.Append(CXXFLAGS=['-Wno-deprecated'])
+env.Append(LINKFLAGS=['-Wl,--gc-sections',
+                      '-Wl,-z,nocopyreloc',
+                      '--sysroot=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm',
+                      '-Wl,--no-undefined',
+                      '-Wl,-z,noexecstack',
+                      '-Wl,-rpath-link=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
 
-   # SCons default SHLINKFLAGS is '$LINKFLAGS -shared'.  Since we don't
-   # want to pull in $LINKFLAGS, reset it here instead of Append().
+# SCons default SHLINKFLAGS is '$LINKFLAGS -shared'.  Since we don't
+# want to pull in $LINKFLAGS, reset it here instead of Append().
 
-   if env['VARIANT'] == 'debug':
-      stripomatic = ''
-   else:
-      stripomatic = '-s'
-   
-   env['SHLINKFLAGS'] = ' '.join(['-Wl,-soname,${TARGET.file} '
-                                  '-shared',
-                                  '--sysroot=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm',
-                                  '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libc.so',
-                                  '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libstdc++.so',
-                                  '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libm.so',
-                                  '-Wl,--fix-cortex-a8',
-                                  '-Wl,--no-undefined',
-                                  '-Wl,-z,noexecstack',
-                                  '-Wl,-rpath-link=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib',
-                                  stripomatic])
+if env['VARIANT'] == 'debug':
+   stripomatic = ''
 else:
-    env.Append(LINKFLAGS=['-nostdlib',
-                          '-Bdynamic',
-                          '-Wl,--no-undefined',
-                          '-Wl,-T,$ANDROID_NDK/build/prebuilt/$PREBUILT_HOST_OS/arm-eabi-4.4.0/arm-eabi/lib/ldscripts/armelf.x',
-                          '-Wl,-dynamic-linker,/system/bin/linker',
-                          '-Wl,--gc-sections',
-                          '-Wl,-z,nocopyreloc',
-                          '-Wl,-rpath-link=$ANDROID_NDK/build/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib',
-                          '$ANDROID_NDK/build/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/crtbegin_dynamic.o'])
-
-    # Android linking requires a postfix set of objects
-    env.Append(LINKCOM=' $LINKFLAGS_POST')
-    env.Append(LINKFLAGS_POST=[#'$ANDROID_NDK/build/prebuilt/$PREBUILT_HOST_OS/arm-eabi-4.4.0/lib/gcc/arm-eabi/4.4.0/libgcc.a',
-                               '$ANDROID_NDK/build/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/crtend_android.o'])
-
-    # SCons default SHLINKFLAGS is '$LINKFLAGS -shared'.  Since we don't
-    # want to pull in $LINKFLAGS, reset it here instead of Append().
-
-    if env['VARIANT'] == 'debug':
-        stripomatic = ''
-    else:
-        stripomatic = '-s'
+   stripomatic = '-s'
    
-    env['SHLINKFLAGS'] = ' '.join(['-nostdlib',
-                                   '-march=armv5te',
-                                   '-mtune=xscale',
-                                   '-Wl,-soname,${TARGET.file}',
-                                   '-Wl,-shared,-Bsymbolic',
-                                   '-Wl,--fix-cortex-a8',
-                                   '-Wl,--no-undefined',
-                                   '-Wl,-z,noexecstack',
-                                   '-Wl,-rpath-link=$ANDROID_NDK/build/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib',
-                                   stripomatic])
+env['SHLINKFLAGS'] = ' '.join(['-Wl,-soname,${TARGET.file} '
+                               '-shared',
+                               '--sysroot=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm',
+                               '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libc.so',
+                               '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libstdc++.so',
+                               '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libm.so',
+                               '-Wl,--fix-cortex-a8',
+                               '-Wl,--no-undefined',
+                               '-Wl,-z,noexecstack',
+                               '-Wl,-rpath-link=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib',
+                               stripomatic])
 
 # Debug/Release variants
 if env['VARIANT'] == 'debug':
