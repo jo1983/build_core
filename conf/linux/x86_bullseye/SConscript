@@ -39,14 +39,16 @@ if not env.GetOption('clean'):
     else:
       print "BULLSEYE_PATH is defined but the Bullseye tool"
       print "does not appear to be installed at that location"
-      Exit()
+      if not GetOption('help'):
+        Exit()
 
   # Bail if BULLSEYE_PATH not defined in users env var
   else:
     print "Bullseye code coverage tool must be installed and"
     print "the env var BULLSEYE_PATH must be defined and must point"
     print "to the bullseye code coverage tool bin directory"
-    Exit()
+    if not GetOption('help'):
+      Exit()
 
   # Set Bullseye coverage file, if it's been defined (i.e. COVFILE).  
   # If not, it will default to the current directory ('test.cov')

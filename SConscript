@@ -63,7 +63,8 @@ if env['OS'] == 'win8' or env['OS'] == 'win7' or env['OS'] == 'winxp':
         print 'Building for ARM'		
     else:
         print 'Windows CPU must be x86, x86_64 or arm'
-        Exit()
+        if not GetOption('help'):
+            Exit()
 elif env['OS'] == 'android':
     env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar'], ENV={'PATH': path})
 else:
@@ -72,7 +73,8 @@ else:
 # Make it a build error to build stand alone daemon on unsupported platforms
 if env['OS'] != 'android' and env['OS'] != 'android_donut' and env['OS'] != 'linux' and env['OS'] != 'openwrt':
     if env['BD'] != "on":
-	    print "Stand alone daemon is not supported on OS=%s" % (env['OS'])
+        print "Stand alone daemon is not supported on OS=%s" % (env['OS'])
+        if not GetOption('help'):
 	    Exit()
 	
 Help(vars.GenerateHelpText(env))
@@ -104,7 +106,8 @@ elif env['OS'] == 'openwrt':
     env['OS_CONF'] = 'openwrt'
 else:
     print 'Unsupported OS/CPU combination'
-    Exit()
+    if not GetOption('help'):
+        Exit()
 
 if env['VARIANT'] == 'release':
     env.Append(CPPDEFINES = 'NDEBUG')

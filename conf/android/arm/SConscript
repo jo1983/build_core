@@ -39,25 +39,31 @@ if os.path.exists(env.subst('$ANDROID_NDK/RELEASE.TXT')):
    ndkVersion = relfile.readline().strip()[1:]
 else:
    print 'Cannot determine Android NDK version'
-   Exit()
+   if not GetOption('help'):
+      Exit()
 
 if ndkVersion not in known_ndk_versions:
    print 'Unsupported Android NDK version'
-   Exit()
+   if not GetOption('help'):
+      Exit()
 
 vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (5 through 8c)', 
                       ndkVersion, allowed_values=known_ndk_versions,  map={}, ignorecase=0))
 vars.Update(env)
 Help(vars.GenerateHelpText(env))
 
+missing_vars = False
+
 # Verify dependencies
 if '' == env.subst('$ANDROID_NDK'):
    print 'ANDROID_NDK variable is required'
-   Exit()
+   if not GetOption('help'):
+      missing_vars = True;
 
 if '' == env.subst('$ANDROID_SRC'):
    print 'ANDROID_SRC variable is required'
-   Exit()
+   if not GetOption('help'):
+      missing_vars = True;
 
 if '' == env.subst('$ANDROID_TARGET'):
    env['ANDROID_TARGET'] = 'generic'
@@ -65,6 +71,9 @@ if '' == env.subst('$ANDROID_TARGET'):
 if '' == env.subst('$ANDROID_API_LEVEL'):
    env['ANDROID_API_LEVEL'] = '16'
 
+
+if missing_vars:
+   Exit()
 
 # Override MSVC build settings when building on windows.
 if 'win32' == env.subst('$HOST_OS'):

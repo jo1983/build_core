@@ -28,7 +28,8 @@ Help(vars.GenerateHelpText(env))
 # Verify dependencies
 if '' == env.subst('$ANDROID_BASE'):
    print 'ANDROID_BASE variable is required'
-   Exit()
+   if not GetOption('help'):
+      Exit()
 
 # Android specific compiler flags
 ANDROID_CONFIG_H = File(env.subst('$ANDROID_BASE/system/core/include/arch/linux-arm/AndroidConfig.h')).get_abspath()
