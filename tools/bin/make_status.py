@@ -255,13 +255,15 @@ const char* QCC_%sStatusText(QStatus status)""" % prefix)
 #include <qcc/platform.h>
 #include <Status.h>
 
-#if defined(QCC_OS_GROUP_WINRT) && !defined(NDEBUG)
-namespace AllJoyn {
+#if defined(QCC_OS_GROUP_WINRT)
+namespace qcc {
 
 static std::unordered_map<uint32_t, const char *> statusMap;
 static bool statusMapInited = false;
 static qcc::Mutex statusMapLock;
 
+#define TO_TEXT(_status) #_status
+#define TO_TEXT_AND_CONCAT(_status, comment) #_status##" : "##comment
 void InitStatusMap()
 {
 """)
@@ -302,7 +304,7 @@ def writeCPP0xFooters():
         CommentCodeOut.write("""
 }
 
-const char* QCC_StatusComment(uint32_t status)
+const char* QCC_StatusMessage(uint32_t status)
 {
     statusMapLock.Lock();
     if (!statusMapInited) {
@@ -346,8 +348,12 @@ def parseAndWriteCPP0xStatusBlock(blockNode):
                     CPP0xHeaderOut.write(",\n    %s = %s /**< %s */" % (node.getAttribute('name'), node.getAttribute('value'), node.getAttribute('comment')))
             if None != CPP0xCodeOut:
                 CPP0xCodeOut.write("        CASE(QStatus::%s);\n" % (node.getAttribute('name')))
-	    if None != CommentCodeOut:
-                CommentCodeOut.write("    statusMap[(uint32_t)%s] = \"%s\";\n" % (node.getAttribute('name'),	node.getAttribute('comment')))
+            if None != CommentCodeOut:
+                CommentCodeOut.write("#ifdef NDEBUG\n")
+                CommentCodeOut.write("    statusMap[(uint32_t)%s] = TO_TEXT(%s);\n" % (node.getAttribute('name'), node.getAttribute('name')))
+                CommentCodeOut.write("#else\n")
+                CommentCodeOut.write("    statusMap[(uint32_t)%s] = TO_TEXT_AND_CONCAT(%s, \"%s\");\n" % (node.getAttribute('name'), node.getAttribute('name'), node.getAttribute('comment')))
+                CommentCodeOut.write("#endif\n")
             offset += 1
         elif node.localName == 'include' and node.namespaceURI == 'http://www.w3.org/2001/XInclude':
             parseAndWriteCPP0xInclude(node)
