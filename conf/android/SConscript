@@ -1,0 +1,160 @@
+# Copyright 2013, Qualcomm Innovation Center, Inc.
+#
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+#
+
+import os
+Import('env')
+
+# android specific vars
+vars = Variables()
+vars.Add(PathVariable('ANDROID_SRC', ' Base directory of Android source tree', os.environ.get('ANDROID_SRC')))
+vars.Add(PathVariable('ANDROID_NDK', ' Base directory of Android NDK', os.environ.get('ANDROID_NDK')))
+vars.Add(PathVariable('ANDROID_SDK', ' Base directory of Android SDK', os.environ.get('ANDROID_SDK')))
+vars.Add('ANDROID_TARGET', ' Target to be used for the build', os.environ.get('ANDROID_TARGET'))
+vars.Add(EnumVariable('ANDROID_API_LEVEL', ' Android API level (8, 9, 10, 14, 15 or 16)', 
+                      os.environ.get('ANDROID_API_LEVEL'), allowed_values=('8', '9', '10', '14', '15', '16', ''),  map={}, ignorecase=0))
+vars.Update(env)
+
+known_ndk_versions = [ '5',
+                       '6',
+                       '7',
+                       '8',
+                       '8b',
+                       '8c' ]
+
+# Determine Android NDK version
+if os.path.exists(env.subst('$ANDROID_NDK/RELEASE.TXT')):
+   relfile = open(os.path.join(env['ANDROID_NDK'], 'RELEASE.TXT'), 'r')
+   ndkVersion = relfile.readline().strip()[1:]
+else:
+   print 'Cannot determine Android NDK version'
+   if not GetOption('help'):
+      Exit()
+
+if ndkVersion not in known_ndk_versions:
+   print 'Unsupported Android NDK version'
+   if not GetOption('help'):
+      Exit()
+
+vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (5 through 8c)', 
+                      ndkVersion, allowed_values=known_ndk_versions,  map={}, ignorecase=0))
+vars.Update(env)
+Help(vars.GenerateHelpText(env))
+
+missing_vars = False
+
+# Verify dependencies
+if '' == env.subst('$ANDROID_NDK'):
+   print 'ANDROID_NDK variable is required'
+   if not GetOption('help'):
+      missing_vars = True;
+
+if '' == env.subst('$ANDROID_SRC'):
+   print 'ANDROID_SRC variable is required'
+   if not GetOption('help'):
+      missing_vars = True;
+
+if '' == env.subst('$ANDROID_TARGET'):
+   env['ANDROID_TARGET'] = 'generic'
+
+if '' == env.subst('$ANDROID_API_LEVEL'):
+   env['ANDROID_API_LEVEL'] = '16'
+
+
+if missing_vars:
+   Exit()
+
+# Override MSVC build settings when building on windows.
+if 'win32' == env.subst('$HOST_OS'):
+   env['OBJPREFIX']      = ''
+   env['OBJSUFFIX']      = '.o'
+   env['SHOBJPREFIX']    = '$OBJPREFIX'
+   env['SHOBJSUFFIX']    = '$OBJSUFFIX'
+   env['PROGPREFIX']     = ''
+   env['PROGSUFFIX']     = ''
+   env['LIBPREFIX']      = 'lib'
+   env['LIBSUFFIX']      = '.a'
+   env['SHLIBPREFIX']    = '$LIBPREFIX'
+   env['SHLIBSUFFIX']    = '.so'
+   env['LIBPREFIXES']    = [ '$LIBPREFIX' ]
+   env['LIBSUFFIXES']    = [ '$LIBSUFFIX', '$SHLIBSUFFIX' ]
+   env['PREBUILT_HOST_OS'] = 'windows'
+else:
+   env['PREBUILT_HOST_OS'] = 'linux-x86'
+
+# Android specific compiler flags
+# These flags are copied from the Android NDK version r4.
+# CHANGING THESE COULD AFFECT COMPATIBILITY WITH THE NDK.
+
+env.Append(CPPDEFINES=['QCC_OS_ANDROID',
+                       'ANDROID'])
+
+env.Append(CPPFLAGS=['-fpic',
+                     '-ffunction-sections',
+                     '-funwind-tables',
+                     '-fstack-protector',
+                     '-Wno-psabi',
+                     '-msoft-float',
+                     '-Os',
+                     '-fomit-frame-pointer',
+                     '-Wno-unused',
+                     '-Wa,--noexecstack'])
+
+env.Append(CXXFLAGS=['-fno-exceptions',
+                     '-fno-rtti'])
+
+# More compiler flags that Alljoyn likes to see
+env.Append(CPPFLAGS=['-Wall', '-pipe'])
+
+# NDK version specific flags
+env.Append(CPPFLAGS=['-fno-strict-aliasing',
+                     '-funswitch-loops',
+                     '-finline-limit=300'])
+
+# Normalize NDK platform support (only certain ANDROID_API_LEVELs are directly supported)
+if int(env['ANDROID_API_LEVEL']) >= 14:
+   env['ANDROID_API_LEVEL_NDK'] = '14';
+elif int(env['ANDROID_API_LEVEL']) >= 9:
+   env['ANDROID_API_LEVEL_NDK'] = '9';
+else:
+   env['ANDROID_API_LEVEL_NDK'] = '8';
+
+# Add Android SDK lib to CLASSPATH
+if '' != env.subst('$ANDROID_SDK'):
+   env.AppendENVPath("JAVACLASSPATH", [env.subst('$ANDROID_SDK/platforms/android-$ANDROID_API_LEVEL/android.jar')])
+   env['JAVACLASSPATH'] = env['ENV']['JAVACLASSPATH']
+
+# Android link flags
+env.Append(CXXFLAGS=['-Wno-deprecated'])
+env.Append(LINKFLAGS=['-Wl,--gc-sections',
+                      '-Wl,-z,nocopyreloc',
+                      '-Wl,--no-undefined',
+                      '-Wl,-z,noexecstack'])
+
+# SCons default SHLINKFLAGS is '$LINKFLAGS -shared'.  Since we don't
+# want to pull in $LINKFLAGS, reset it here instead of Append().
+
+if env['VARIANT'] == 'debug':
+   stripomatic = ''
+else:
+   stripomatic = '-s'
+
+# Debug/Release variants
+if env['VARIANT'] == 'debug':
+   env.Append(CPPFLAGS=['-O0', '-g'])
+   env.Append(JAVACFLAGS='-g -Xlint -Xlint:-serial')
+else:
+   env.Append(CPPFLAGS=['-O3'])
+   env.Append(LINKFLAGS='-s')
+   env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')
