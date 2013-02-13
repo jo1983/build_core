@@ -31,7 +31,8 @@ known_ndk_versions = [ '5',
                        '7',
                        '8',
                        '8b',
-                       '8c' ]
+                       '8c',
+                       '8d' ]
 
 # Determine Android NDK version
 if os.path.exists(env.subst('$ANDROID_NDK/RELEASE.TXT')):
@@ -47,7 +48,7 @@ if ndkVersion not in known_ndk_versions:
    if not GetOption('help'):
       Exit()
 
-vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (5 through 8c)', 
+vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (5 through 8d)',
                       ndkVersion, allowed_values=known_ndk_versions,  map={}, ignorecase=0))
 vars.Update(env)
 Help(vars.GenerateHelpText(env))
