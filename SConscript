@@ -1,4 +1,4 @@
-# Copyright 2010 - 2012, Qualcomm Innovation Center, Inc.
+# Copyright 2010 - 2013, Qualcomm Innovation Center, Inc.
 # 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ import os
 vars = Variables()
 
 # Common build variables
-vars.Add(EnumVariable('OS', 'Target OS', 'linux', allowed_values=('linux', 'win8', 'win7', 'winxp', 'android', 'android_donut', 'maemo', 'darwin', 'openwrt')))
-vars.Add(EnumVariable('CPU', 'Target CPU', 'x86', allowed_values=('x86', 'x86_64', 'arm', 'armv7', 'armv7s', 'x86_bullseye', 'openwrt')))
+vars.Add(EnumVariable('OS', 'Target OS', 'linux', allowed_values=('linux', 'win8', 'win7', 'winxp', 'android', 'maemo', 'darwin', 'openwrt')))
+vars.Add(EnumVariable('CPU', 'Target CPU', 'x86', allowed_values=('x86', 'x86_64', 'arm', 'armv7', 'armv7s', 'openwrt')))
 vars.Add(EnumVariable('VARIANT', 'Build variant', 'debug', allowed_values=('debug', 'release', 'Debug', 'Release')))
 vars.Add(EnumVariable('BD', 'Have bundled daemon built-in for C++ test samples', 'on', allowed_values=('on', 'off')))
 vars.Add(EnumVariable('DOCS', '''Output doc type. Setting the doc type to "dev" will produce HTML 
@@ -71,7 +71,7 @@ else:
     env = Environment(variables = vars, ENV={'PATH': path})
 
 # Make it a build error to build stand alone daemon on unsupported platforms
-if env['OS'] != 'android' and env['OS'] != 'android_donut' and env['OS'] != 'linux' and env['OS'] != 'openwrt':
+if env['OS'] != 'android' and env['OS'] != 'linux' and env['OS'] != 'openwrt':
     if env['BD'] != "on":
         print "Stand alone daemon is not supported on OS=%s" % (env['OS'])
         if not GetOption('help'):
@@ -92,9 +92,6 @@ elif env['OS'] == 'win7' or env['OS'] == 'winxp':
 elif env['OS'] == 'android':
     env['OS_GROUP'] = 'posix'
     env['OS_CONF'] = 'android'
-elif env['OS'] == 'android_donut':
-    env['OS_GROUP'] = 'posix'
-    env['OS_CONF'] = 'android_donut'
 elif env['OS'] == 'maemo':
     env['OS_GROUP'] = 'posix'
     env['OS_CONF'] = 'maemo'

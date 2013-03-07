@@ -26,9 +26,7 @@ vars.Add(EnumVariable('ANDROID_API_LEVEL', ' Android API level (8, 9, 10, 14, 15
                       os.environ.get('ANDROID_API_LEVEL'), allowed_values=('8', '9', '10', '14', '15', '16', ''),  map={}, ignorecase=0))
 vars.Update(env)
 
-known_ndk_versions = [ '5',
-                       '6',
-                       '7',
+known_ndk_versions = [ '7',
                        '8',
                        '8b',
                        '8c',
@@ -48,7 +46,7 @@ if ndkVersion not in known_ndk_versions:
    if not GetOption('help'):
       Exit()
 
-vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (5 through 8d)',
+vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (7 through 8d)',
                       ndkVersion, allowed_values=known_ndk_versions,  map={}, ignorecase=0))
 vars.Update(env)
 Help(vars.GenerateHelpText(env))

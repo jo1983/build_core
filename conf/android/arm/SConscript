@@ -32,7 +32,7 @@ env.Append(CPPFLAGS=['-march=armv5te',
                      '-mthumb'])
 
 # Use Android provided tools for Arm architecture
-if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
+if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
    env['ANDROID_TOOLS'] = '$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/bin'
    env['AR'] = '$ANDROID_TOOLS/arm-linux-androideabi-ar'
    env['CC'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
@@ -46,7 +46,7 @@ else:
    env['LINK'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
 
 # include paths
-if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
+if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
    env.Append(CPPPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/include',
                        #Using GNU STL.
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/include',
@@ -67,7 +67,7 @@ else:
 env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
 env.Append(LIBPATH=['$ANDROID_SRC/out/target/product/$ANDROID_TARGET/system/lib'])
 
-if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
+if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
    env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi'])
    env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.4.3/'])
 else:

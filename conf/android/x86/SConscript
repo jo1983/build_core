@@ -29,7 +29,7 @@ env.Append(CPPFLAGS=['-march=i686',
                      '-mtune=generic'])
 
 # Use Android provided tools for x86 architecture
-if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
+if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
    env['ANDROID_TOOLS'] = '$ANDROID_NDK/toolchains/x86-4.4.3/prebuilt/$PREBUILT_HOST_OS/bin'
    env['AR'] = '$ANDROID_TOOLS/i686-android-linux-ar'
    env['CC'] = '$ANDROID_TOOLS/i686-android-linux-gcc'
@@ -43,7 +43,7 @@ else:
    env['LINK'] = '$ANDROID_TOOLS/i686-linux-android-gcc'
 
 # include paths
-if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
+if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
    env.Append(CPPPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-x86/usr/include',
                        #Using GNU STL.
                        '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/include',
@@ -64,7 +64,7 @@ else:
 env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-x86/usr/lib'])
 env.Append(LIBPATH=['$ANDROID_SRC/x86/out/target/product/$ANDROID_TARGET/system/lib'])
 
-if env.subst('$ANDROID_NDK_VERSION') in [ '5', '6', '7', '8' ]:
+if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
    env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/x86'])
    env.Append(LIBPATH=['$ANDROID_NDK/toolchains/x86-4.4.3/prebuilt/$PREBUILT_HOST_OS/lib/gcc/i686-linux-android/4.4.3/'])
 else:
