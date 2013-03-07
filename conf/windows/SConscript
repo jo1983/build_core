@@ -1,4 +1,4 @@
-# Copyright 2010 - 2011, Qualcomm Innovation Center, Inc.
+# Copyright 2010 - 2013, Qualcomm Innovation Center, Inc.
 # 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -54,6 +54,14 @@ env.Append(CXXFLAGS=['/EHsc'])
 env.Append(LFLAGS=['/NODEFAULTLIB:libcmt.lib'])
 env.Append(LINKFLAGS=['/NODEFAULTLIB:libcmt.lib'])
 
+# This will cause Microsoft .pdb files to be generated for release and debug build
+# variants. The side effects of this options is that each .obj file will also generate
+# a pdb file.  These are then resolved to a single pdb file by the linker.  
+# this also makes it possible to build using the -j option since files are no longer 
+# sharing a single pdb. 
+env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
+env['PDB'] = '${TARGET.base}.pdb'
+   
 # Debug/Release variants
 if env['VARIANT'] == 'debug':
    # MSVC 2010 an newer require _ITERATOR_DEBUG_LEVEL specified to specify 
@@ -61,8 +69,8 @@ if env['VARIANT'] == 'debug':
    # specified then the debug version of the multithread and run-time routines
    # (/MDd') to prevent build errors. 
    env.Append(CPPDEFINES=['_DEBUG', ('_ITERATOR_DEBUG_LEVEL', 2)])
-   env.Append(CFLAGS=['/MDd', '/Zi', '/Od'])
-   env.Append(CXXFLAGS=['/MDd', '/Zi', '/Od', '/Gd', '/Ob1'])
+   env.Append(CFLAGS=['/MDd', '/Od'])
+   env.Append(CXXFLAGS=['/MDd', '/Od', '/Gd', '/Ob1'])
    env.Append(LINKFLAGS=['/debug'])
    env.Append(JAVACFLAGS='-g -Xlint -Xlint:-serial')
 else:
