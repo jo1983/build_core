@@ -39,6 +39,10 @@ vars.AddVariables(('OBJDIR', '', build_dir + '/obj'),
 
 env = Environment(variables = vars)
 
+# The Win7 MSI installation package takes a long time to build. Let it be optional.
+if env['OS'] == 'win7':
+    vars.Add(EnumVariable('WIN7_MSI', 'Build the .MSI installation package', 'false', allowed_values=('false', 'true')))
+
 # Some tool aren't in default path
 if os.environ.has_key('JAVA_HOME'):
     env.PrependENVPath('PATH', os.path.normpath(os.environ['JAVA_HOME'] + '/bin'))
