@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2011, Qualcomm Innovation Center, Inc.
+# Copyright 2011 - 2013 Qualcomm Innovation Center, Inc.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -216,22 +216,18 @@ def find_config( ):
     ajcfgpath = None
     foundit = 0
     DIRDEPTHMAX = 6
-    curdir = None
-    start = os.path.abspath(os.curdir)
 
     '''Limit directory search to depth DIRDEPTHMAX'''
+    curdir = os.path.abspath(os.curdir)
     for i in range(DIRDEPTHMAX):
-        curdir = os.getcwd()
         if tgtdir in os.listdir(curdir):
             foundit = 1
             break
         else:
-            os.chdir("..")
+            curdir = os.path.abspath(os.path.join(curdir, ".."))
 
     if foundit == 1 and os.path.exists(os.path.join(curdir, ajcfgrelpath)):
         ajcfgpath = os.path.join(curdir, ajcfgrelpath)
-
-    os.chdir(start)
     return ajcfgpath
 
 '''Recurse through directories and locate files that match a given pattern'''

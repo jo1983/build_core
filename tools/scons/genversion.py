@@ -1,4 +1,4 @@
-# Copyright 2010 - 2011, Qualcomm Innovation Center, Inc.
+# Copyright 2010 - 2013, Qualcomm Innovation Center, Inc.
 # 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,18 +22,18 @@ from subprocess import *
 ver_re = re.compile('int\s+(?P<REL>architecture|apiLevel|release)\s*=\s*(?P<VAL>\d+)\s*;\s*$')
 prod_re = re.compile('char(\s+const)?\s*(\sproduct\[\]|\*\s*product)\s*=\s*"(?P<STR>.*)"\s*;\s*$')
 
-def GetBuildInfo(env):
+def GetBuildInfo(env, source):
     branches = []
     tags = []
     if env.has_key('GIT'):
         try:
-            branches = Popen([env['GIT'], 'branch'], stdout = PIPE, stderr = PIPE).communicate()[0].splitlines()
-            tags = Popen([env['GIT'], 'describe', '--always', '--long', '--abbrev=40'], stdout = PIPE, stderr = PIPE).communicate()[0].splitlines()
+            branches = Popen([env['GIT'], 'branch'], stdout = PIPE, stderr = PIPE, cwd = source).communicate()[0].splitlines()
+            tags = Popen([env['GIT'], 'describe', '--always', '--long', '--abbrev=40'], stdout = PIPE, stderr = PIPE, cwd = source).communicate()[0].splitlines()
         except WindowsError as e:
             if e[0] == 2:
                 try:
-                    branches = Popen([env['GIT'] + '.cmd', 'branch'], stdout = PIPE, stderr = PIPE).communicate()[0].splitlines()
-                    tags = Popen([env['GIT'] + '.cmd', 'describe', '--always', '--long', '--abbrev=40'], stdout = PIPE, stderr = PIPE).communicate()[0].splitlines()
+                    branches = Popen([env['GIT'] + '.cmd', 'branch'], stdout = PIPE, stderr = PIPE, cwd = source).communicate()[0].splitlines()
+                    tags = Popen([env['GIT'] + '.cmd', 'describe', '--always', '--long', '--abbrev=40'], stdout = PIPE, stderr = PIPE, cwd = source).communicate()[0].splitlines()
                 except:
                     pass
         except:
@@ -102,10 +102,8 @@ def ParseSource(source):
 def GenVersionAction(source, target, env):
     import time
     product, architecture, api_level, release, lines = ParseSource(str(source[0]))
-    curdir = os.getcwd()
-    os.chdir(os.path.dirname(str(source[0])))
-    bld_info = GetBuildInfo(env)
-    os.chdir(curdir)
+    fpath = os.path.abspath(os.path.dirname(str(source[0])))
+    bld_info = GetBuildInfo(env, fpath)
     date = time.strftime('%a %b %d %H:%M:%S UTC %Y', time.gmtime())
     version_str = 'v%(arch)d.%(api)d.%(rel)d' % ({ 'arch': architecture,
                                                    'api': api_level,
