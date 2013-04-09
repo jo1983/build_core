@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# Copyright 2012, Qualcomm Innovation Center, Inc.
+# Copyright 2012-2013, Qualcomm Innovation Center, Inc.
 # 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -109,25 +109,25 @@ def writeHeaders():
         for arg in fileArgs:
             depOut.write(" \\\n %s" % arg)
     if None != codeOut:
-        codeOut.write("""/**                                                                                                   
- * @file                                                                                              
- * This file contains an enumerated list values that QStatus can return                               
- *                                                                                                    
- * Note: This file is generated during the make process.                                              
- *                                                                                                    
- * Copyright 2009-2011, Qualcomm Innovation Center, Inc.                                              
- *                                                                                                    
- *    Licensed under the Apache License, Version 2.0 (the "License");                                 
- *    you may not use this file except in compliance with the License.                                
- *    You may obtain a copy of the License at                                                         
- *                                                                                                    
- *        http://www.apache.org/licenses/LICENSE-2.0                                                  
- *                                                                                                    
- *    Unless required by applicable law or agreed to in writing, software                             
- *    distributed under the License is distributed on an "AS IS" BASIS,                               
- *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.                        
- *    See the License for the specific language governing permissions and                             
- *    limitations under the License.                                                                  
+        codeOut.write("""/**
+ * @file
+ * This file contains an enumerated list values that QStatus can return
+ *
+ * Note: This file is generated during the make process.
+ *
+ * Copyright 2009-2011, Qualcomm Innovation Center, Inc.
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
  */ 
 
 using System;
@@ -137,158 +137,148 @@ using System.Threading;
 
 namespace AllJoynUnity
 {
-    public partial class AllJoyn
-    {
-        /**                                                                                           
-         * Enumerated list of values QStatus can return                                               
-         */ 
-        public class QStatus
-        {
-            private QStatus(int x)
-            {
-            
-                value = x;
-            }
+\tpublic partial class AllJoyn
+\t{
+\t\t/**
+\t\t * Enumerated list of values QStatus can return
+\t\t */ 
+\t\tpublic class QStatus
+\t\t{
+\t\t\tprivate QStatus(int x)
+\t\t\t{
+\t\t\t\tvalue = x;
+\t\t\t}
 
-            /** 
-             * Static constructor
-             * @param x status to set for QStatus object
-             *
-             * @return a new QStatus object
-             */
-            public static implicit operator QStatus(int x)
-            {
-            
-                return new QStatus(x);
-            }
+\t\t\t/** 
+\t\t\t * Static constructor
+\t\t\t * @param x status to set for QStatus object
+\t\t\t *
+\t\t\t * @return a new QStatus object
+\t\t\t */
+\t\t\tpublic static implicit operator QStatus(int x)
+\t\t\t{
+\t\t\t\treturn new QStatus(x);
+\t\t\t}
 
-            /** 
-             * Gets the int value of the QStatus object  
-             *
-             * @param x QStatus object to check status
-             * @return the int value of the QStatus object  
-             */
-            public static implicit operator int(QStatus x)
-            {
-            
-                return x.value;
-            }
+\t\t\t/** 
+\t\t\t * Gets the int value of the QStatus object  
+\t\t\t *
+\t\t\t * @param x QStatus object to check status
+\t\t\t * @return the int value of the QStatus object  
+\t\t\t */
+\t\t\tpublic static implicit operator int(QStatus x)
+\t\t\t{
+\t\t\t\treturn x.value;
+\t\t\t}
 
-            /** 
-             * Shortcut to determine if a QStatus is an OK status
-             *
-             * @param x QStatus object to check status
-             * @return true if the status == OK
-             */
-            public static bool operator true(QStatus x)
-            {
-            
-                return (x == OK);
-            }
+\t\t\t/** 
+\t\t\t * Shortcut to determine if a QStatus is an OK status
+\t\t\t *
+\t\t\t * @param x QStatus object to check status
+\t\t\t * @return true if the status == OK
+\t\t\t */
+\t\t\tpublic static bool operator true(QStatus x)
+\t\t\t{
+\t\t\t\treturn (x == OK);
+\t\t\t}
 
-            /** 
-             * Shortcut to determine if a QStatus is not an OK status
-             *
-             * @param x QStatus object to check status
-             * @return true if the status != OK
-             */
-            public static bool operator false(QStatus x)
-            {
-            
-                return (x != OK);
-            }
+\t\t\t/** 
+\t\t\t * Shortcut to determine if a QStatus is not an OK status
+\t\t\t *
+\t\t\t * @param x QStatus object to check status
+\t\t\t * @return true if the status != OK
+\t\t\t */
+\t\t\tpublic static bool operator false(QStatus x)
+\t\t\t{
+\t\t\t\treturn (x != OK);
+\t\t\t}
 
-            /** 
-             * Compares the status value of two QStatus objects
-             *
-             * @param x QStatus object to compare with
-             * @param y QStatus object to compare against
-             * @return true if the status values are equal
-             */
-            public static bool operator ==(QStatus x, QStatus y)
-            {
-            
-                return x.value == y.value;
-            }
+\t\t\t/** 
+\t\t\t * Compares the status value of two QStatus objects
+\t\t\t *
+\t\t\t * @param x QStatus object to compare with
+\t\t\t * @param y QStatus object to compare against
+\t\t\t * @return true if the status values are equal
+\t\t\t */
+\t\t\tpublic static bool operator ==(QStatus x, QStatus y)
+\t\t\t{
+\t\t\t\treturn x.value == y.value;
+\t\t\t}
 
-            /** 
-             * Compares two QStatus objects
-             *
-             * @param o object to compare against this QStatus
-             * @return true if two QStatus objects are equals
-             */
-            public override bool Equals(object o) 
-            {
-                try
-                {
-                    return (this == (QStatus)o);
-                }
-                catch
-                {
-                    return false;
-                }
-            }
+\t\t\t/** 
+\t\t\t * Compares two QStatus objects
+\t\t\t *
+\t\t\t * @param o object to compare against this QStatus
+\t\t\t * @return true if two QStatus objects are equals
+\t\t\t */
+\t\t\tpublic override bool Equals(object o) 
+\t\t\t{
+\t\t\t\ttry
+\t\t\t\t{
+\t\t\t\t\treturn (this == (QStatus)o);
+\t\t\t\t}
+\t\t\t\tcatch
+\t\t\t\t{
+\t\t\t\t\treturn false;
+\t\t\t\t}
+\t\t\t}
 
-            /** 
-             * Gets the numeric error code
-             *
-             * @return the numeric error code
-             */
-            public override int GetHashCode()
-            {
-            
-                return value;
-            }
+\t\t\t/** 
+\t\t\t * Gets the numeric error code
+\t\t\t *
+\t\t\t * @return the numeric error code
+\t\t\t */
+\t\t\tpublic override int GetHashCode()
+\t\t\t{
+\t\t\t\treturn value;
+\t\t\t}
 
-            /** 
-             * Gets a string representing the QStatus value
-             *
-             * @return a string representing the QStatus value
-             */
-            public override string ToString()
-            {
-            
-                return Marshal.PtrToStringAnsi(QCC_StatusText(value));
-            }
+\t\t\t/** 
+\t\t\t * Gets a string representing the QStatus value
+\t\t\t *
+\t\t\t * @return a string representing the QStatus value
+\t\t\t */
+\t\t\tpublic override string ToString()
+\t\t\t{
+\t\t\t
+\t\t\t\treturn Marshal.PtrToStringAnsi(QCC_StatusText(value));
+\t\t\t}
 
-            /** 
-             * Gets the string representation of the QStatus value
-             *
-             * @param x QStatus object to get value from 
-             * @return the string representation of the QStatus value
-             */
-            public static implicit operator string(QStatus x)
-            {
-            
-                return x.value.ToString();
-            }
+\t\t\t/** 
+\t\t\t * Gets the string representation of the QStatus value
+\t\t\t *
+\t\t\t * @param x QStatus object to get value from 
+\t\t\t * @return the string representation of the QStatus value
+\t\t\t */
+\t\t\tpublic static implicit operator string(QStatus x)
+\t\t\t{
+\t\t\t\treturn x.value.ToString();
+\t\t\t}
 
-            /** 
-             * Checks if two QStatus objects are not equal
-             *
-             * @param x QStatus object to compare with
-             * @param y QStatus object to compare against
-             * @return true if two QStatus objects are not equal
-             */
-            public static bool operator !=(QStatus x, QStatus y)
-            {
-            
-                return x.value != y.value;
-            }
+\t\t\t/** 
+\t\t\t * Checks if two QStatus objects are not equal
+\t\t\t *
+\t\t\t * @param x QStatus object to compare with
+\t\t\t * @param y QStatus object to compare against
+\t\t\t * @return true if two QStatus objects are not equal
+\t\t\t */
+\t\t\tpublic static bool operator !=(QStatus x, QStatus y)
+\t\t\t{
+\t\t\t\treturn x.value != y.value;
+\t\t\t}
 
-            /** 
-             * checks if the QStatus object does not equal OK
-             * 
-             * @param x QStatus object to compare against
-             * @return true if the QStatus object does not equal OK
-             */
-            public static bool operator !(QStatus x)
-            {
-            
-                return (x != OK);
-            }
+\t\t\t/** 
+\t\t\t * checks if the QStatus object does not equal OK
+\t\t\t * 
+\t\t\t * @param x QStatus object to compare against
+\t\t\t * @return true if the QStatus object does not equal OK
+\t\t\t */
+\t\t\tpublic static bool operator !(QStatus x)
+\t\t\t{
+\t\t\t\treturn (x != OK);
+\t\t\t}
 
-            internal int value;
+\t\t\tinternal int value;
 """)
 
 def writeFooters():
@@ -299,13 +289,13 @@ def writeFooters():
         depOut.write("\n")
     if None != codeOut:
         codeOut.write("""
-        }
-        #region DLL Imports
-        [DllImport(DLL_IMPORT_TARGET)]
-        private extern static IntPtr QCC_StatusText(int status);
+\t\t}
+\t\t#region DLL Imports
+\t\t[DllImport(DLL_IMPORT_TARGET)]
+\t\tprivate extern static IntPtr QCC_StatusText(int status);
 
-        #endregion
-    }
+\t\t#endregion
+\t}
 }
 """)
     
@@ -328,8 +318,8 @@ def parseStatusBlock(blockNode):
             offset = int(node.firstChild.data, 0)
         elif node.localName == 'status':
             if None != codeOut:
-                codeOut.write("\n            /// %s" % node.getAttribute('comment'))
-                codeOut.write("\n            public static readonly QStatus %s = new QStatus(%s);" % (node.getAttribute('name')[3:], node.getAttribute('value')))
+                codeOut.write("\n\t\t\t/// %s" % node.getAttribute('comment'))
+                codeOut.write("\n\t\t\tpublic static readonly QStatus %s = new QStatus(%s);" % (node.getAttribute('name')[3:], node.getAttribute('value')))
             offset += 1
         elif node.localName == 'include' and node.namespaceURI == 'http://www.w3.org/2001/XInclude':
             parseInclude(node)
