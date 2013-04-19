@@ -108,11 +108,10 @@ def GenVersionAction(source, target, env):
     version_str = 'v%(arch)d.%(api)d.%(rel)d' % ({ 'arch': architecture,
                                                    'api': api_level,
                                                    'rel': release })
-    build_str = '%(prod)s %(ver)s (Built %(date)s on %(mach)s by %(user)s%(bld)s)' % ({
+    build_str = '%(prod)s %(ver)s (Built %(date)s by %(user)s%(bld)s)' % ({
         'prod': product,
         'ver': version_str,
         'date': date,
-        'mach': platform.uname()[1],
         'user': getpass.getuser(),
         'bld': (bld_info and ' - ' + bld_info) or '' })
 
