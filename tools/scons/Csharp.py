@@ -1,4 +1,4 @@
-# Copyright 2012, Qualcomm Innovation Center, Inc.
+# Copyright 2012-2013, Qualcomm Innovation Center, Inc.
 # 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import SCons.Util
 
 cs_action = '$CSC "/target:exe" $_CSC_FLAGS "/out:${TARGET.abspath}" ${SOURCES}'
 #cs_lib_action = "csc.exe /target:library /out:${TARGET} ${SOURCE.dir}\*.cs $_CSC_FLAGS"
-cs_lib_action = '$CSC "/target:library" $_CSC_LIB_PATHS $_CSC_REFERENCES "/out:${TARGET.abspath}" ${SOURCES}'
+cs_lib_action = '$CSC "/target:library" $_CSC_LIB_FLAGS $_CSC_LIB_PATHS $_CSC_REFERENCES "/out:${TARGET.abspath}" ${SOURCES}'
 cs_suffix = '.exe'
 cs_lib_suffix = '.dll'
 
@@ -45,6 +45,7 @@ def generate(env):
     env['_CSC_FLAGS'] = "${_stripixes('\"/', CSC_FLAGS, '\"', '\"/', '\"', __env__)}" 
     # A list of compiler flags when building a library file
     env['CSC_LIB_FLAGS'] = ''
+    env['_CSC_LIB_FLAGS'] = "${_stripixes('\"/', CSC_LIB_FLAGS, '\"', '\"/', '\"', __env__)}"
     # A list of .NET Framework Assemblies i.e. dlls compiled by a .net language
     env['CSC_REFERENCES'] = ''
     env['_CSC_REFERENCES'] = "${_stripixes('\"/reference:', CSC_REFERENCES, '\"', '', '', __env__)}"
