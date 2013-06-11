@@ -1,4 +1,4 @@
-# Copyright 2010 - 2011, Qualcomm Innovation Center, Inc.
+# Copyright 2010 - 2013, Qualcomm Innovation Center, Inc.
 # 
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -39,19 +39,27 @@ env.Append(LINKFLAGS=['/NODEFAULTLIB:libcmt.lib'])
 
 # Debug/Release variants
 if env['VARIANT'] == 'debug':
-   env.Append(CFLAGS=['/Zi', '/ZW', '/Od', '/Oy-', '/Gd', '/Gm-', '/EHsc', '/RTC1', '/MDd', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
-   env.Append(CXXFLAGS=['/Zi', '/ZW', '/Od', '/Oy-', '/Gd', '/Gm-', '/EHsc', '/RTC1', '/MDd', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
+   env.Append(CFLAGS=['/ZW', '/Od', '/Oy-', '/Gd', '/Gm-', '/EHsc', '/RTC1', '/MDd', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
+   env.Append(CXXFLAGS=['/ZW', '/Od', '/Oy-', '/Gd', '/Gm-', '/EHsc', '/RTC1', '/MDd', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
    env.Append(LINKFLAGS=['/debug'])
    env.Append(JAVACFLAGS='-g -Xlint -Xlint:-serial')
 else:
-   env.Append(CFLAGS=['/Zi', '/ZW', '/O2', '/Gd', '/Gm-', '/EHsc', '/MD', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
-   env.Append(CXXFLAGS=['/Zi', '/ZW', '/O2', '/Gd', '/Gm-', '/EHsc', '/MD', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
+   env.Append(CFLAGS=['/ZW', '/O2', '/Gd', '/Gm-', '/EHsc', '/MD', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
+   env.Append(CXXFLAGS=['/ZW', '/O2', '/Gd', '/Gm-', '/EHsc', '/MD', '/GS', '/fp:precise', '/Zc:wchar_t', '/Zc:forScope'])
    env.Append(LINKFLAGS=['/opt:ref'])   
    env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')	
 
 # Lib setup
 env.Append(LFLAGS=['/NODEFAULTLIB:libcmt.lib'])
 env.Append(LINKFLAGS=['/NODEFAULTLIB:libcmt.lib'])
+
+# This will cause Microsoft .pdb files to be generated for release and debug build
+# variants. The side effects of this options is that each .obj file will also generate
+# a pdb file.  These are then resolved to a single pdb file by the linker.  
+# this also makes it possible to build using the -j option since files are no longer 
+# sharing a single pdb. 
+env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
+env['PDB'] = '${TARGET.base}.pdb'
 
 # Archive expander
 def archive_expand(target, source, env):
