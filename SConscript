@@ -14,22 +14,51 @@
 # 
 
 import os
+import platform
+
+if platform.system() == 'Linux':
+    default_target_os = 'linux'
+    allowed_target_oss = ('linux', 'android', 'maemo', 'openwrt')
+
+    if platform.machine() == 'x86_64':
+        default_target_cpu = 'x86_64'
+    else:
+        default_target_cpu = 'x86'
+    allowed_target_cpus = ('x86', 'x86_64', 'arm', 'openwrt')
+
+elif platform.system() == 'Windows':
+    default_target_os = 'win7'
+    allowed_target_oss = ('winxp', 'win7', 'win8', 'android')
+
+    if platform.machine() == 'x86_64':
+        default_target_cpu = 'x86_64'
+    else:
+        default_target_cpu = 'x86'
+    allowed_target_cpus = ('x86', 'x86_64', 'arm')
+
+elif platform.system() == 'Darwin':
+    default_target_os = 'darwin'
+    allowed_target_oss = ('darwin', 'android', 'openwrt')
+
+    if platform.machine() == 'x86_64':
+        default_target_cpu = 'x86_64'
+    else:
+        default_target_cpu = 'x86'
+    allowed_target_cpus = ('x86', 'arm', 'armv7', 'armv7s', 'openwrt')
+
 
 vars = Variables()
 
 # Common build variables
-vars.Add(EnumVariable('OS', 'Target OS', 'linux', allowed_values=('linux', 'win8', 'win7', 'winxp', 'android', 'darwin', 'openwrt')))
-vars.Add(EnumVariable('CPU', 'Target CPU', 'x86', allowed_values=('x86', 'x86_64', 'arm', 'armv7', 'armv7s', 'openwrt')))
+vars.Add(EnumVariable('OS', 'Target OS', default_target_os, allowed_values = allowed_target_oss))
+vars.Add(EnumVariable('CPU', 'Target CPU', default_target_cpu, allowed_values = allowed_target_cpus))
 vars.Add(EnumVariable('VARIANT', 'Build variant', 'debug', allowed_values=('debug', 'release', 'Debug', 'Release')))
 vars.Add(EnumVariable('BD', 'Have bundled daemon built-in for C++ test samples', 'on', allowed_values=('on', 'off')))
 vars.Add(EnumVariable('DOCS', '''Output doc type. Setting the doc type to "dev" will produce HTML 
     output that includes all developer files not just the public API.
     ''', 'none', allowed_values=('none', 'pdf', 'html', 'dev', 'chm', 'sandcastle')))
-vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', '9.0', allowed_values=('9.0', '10.0', '11.0', '11.0Exp')))
 vars.Add(EnumVariable('WS', 'Whitespace Policy Checker', 'check', allowed_values=('check', 'detail', 'fix', 'off')))
 vars.Add(PathVariable('GTEST_DIR', 'The path to Google Test (gTest) source code',  os.environ.get('GTEST_DIR'), PathVariable.PathIsDir))
-vars.Add(EnumVariable('WINRT_UNITTEST_BUILD', 'Should the WinRT unit test be built',  'on', allowed_values=('on', 'off')))
-vars.Add(EnumVariable('WINRT_UNITTEST_RUN', 'Should the WinRT unit test be run',  'off', allowed_values=('on', 'off')))
 vars.Add(PathVariable('BULLSEYE_BIN', 'The path to Bullseye Code Coverage',  os.environ.get('BULLSEYE_BIN'), PathVariable.PathIsDir))
 
 # Standard variant directories
@@ -38,8 +67,8 @@ vars.AddVariables(('OBJDIR', '', build_dir + '/obj'),
                   ('DISTDIR', '', '#' + build_dir + '/dist'),
                   ('TESTDIR', '', '#' + build_dir + '/test'))
 
-target_os = ARGUMENTS.get('OS', None)
-target_cpu = ARGUMENTS.get('CPU', None)
+target_os = ARGUMENTS.get('OS', default_target_os)
+target_cpu = ARGUMENTS.get('CPU', default_target_cpu)
 
 if target_os in ['win8', 'win7', 'winxp']:
     # The Win7 MSI installation package takes a long time to build. Let it be optional.

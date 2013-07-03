@@ -16,6 +16,11 @@
 import os
 Import('env')
 
+vars = Variables()
+vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', '9.0', allowed_values=('9.0', '10.0', '11.0', '11.0Exp')))
+vars.Update(env)
+Help(vars.GenerateHelpText(env))
+
 # Set up TMP 
 env['ENV']['TMP'] = os.environ['TMP']
 

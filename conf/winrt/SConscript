@@ -16,6 +16,15 @@
 import os
 Import('env')
 
+
+vars = Variables()
+vars.Add(EnumVariable('WINRT_UNITTEST_BUILD', 'Should the WinRT unit test be built',  'on', allowed_values=('on', 'off')))
+vars.Add(EnumVariable('WINRT_UNITTEST_RUN', 'Should the WinRT unit test be run',  'off', allowed_values=('on', 'off')))
+vars.Update(env)
+Help(vars.GenerateHelpText(env))
+
+
+
 # Set up TMP 
 env['ENV']['TMP'] = os.environ['TMP']
 
