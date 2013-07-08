@@ -29,7 +29,6 @@ env.Append(CXXFLAGS=['-Wall',
                      '-Werror=non-virtual-dtor',
                      '-pipe',
                      '-std=gnu++11',
-                     '-fno-rtti',
                      '-fno-exceptions',
                      '-fno-strict-aliasing',
                      '-Wno-deprecated'])
