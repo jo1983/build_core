@@ -38,11 +38,25 @@ vars.AddVariables(('OBJDIR', '', build_dir + '/obj'),
                   ('DISTDIR', '', '#' + build_dir + '/dist'),
                   ('TESTDIR', '', '#' + build_dir + '/test'))
 
-env = Environment(variables = vars)
+target_os = ARGUMENTS.get('OS', None)
+target_cpu = ARGUMENTS.get('CPU', None)
 
-# The Win7 MSI installation package takes a long time to build. Let it be optional.
-if env['OS'] == 'win7':
-    vars.Add(EnumVariable('WIN7_MSI', 'Build the .MSI installation package', 'false', allowed_values=('false', 'true')))
+if target_os in ['win8', 'win7', 'winxp']:
+    # The Win7 MSI installation package takes a long time to build. Let it be optional.
+    if target_os == 'win7':
+        vars.Add(EnumVariable('WIN7_MSI', 'Build the .MSI installation package', 'false', allowed_values=('false', 'true')))
+    if target_os == 'win8':
+        vars.Add(EnumVariable('APPX_CXXFLAGS', 'Include appx dependencies', 'true', allowed_values=('false', 'true')))
+
+    msvc_version = ARGUMENTS.get('MSVC_VERSION')
+    env = Environment(variables = vars, TARGET_ARCH=target_cpu, MSVC_VERSION=msvc_version, tools = ['default', 'jar'])
+
+elif target_os == 'android':
+    env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar'])
+
+else:
+    env = Environment(variables = vars)
+
 
 # Some tool aren't in default path
 if os.environ.has_key('JAVA_HOME'):
@@ -51,37 +65,15 @@ if os.environ.has_key('DOXYGEN_HOME'):
     env.PrependENVPath('PATH', os.path.normpath(os.environ['DOXYGEN_HOME'] + '/bin'))
 if os.environ.has_key('GRAPHVIZ_HOME'):
     env.PrependENVPath('PATH', os.path.normpath(os.environ['GRAPHVIZ_HOME'] + '/bin'))
-path = env['ENV']['PATH']
-
-# Recreate the environment with the correct path
-if env['OS'] == 'win8' or env['OS'] == 'win7' or env['OS'] == 'winxp':
-    if env['OS'] == 'win8':
-        vars.Add(EnumVariable('APPX_CXXFLAGS', 'Include appx dependencies', 'true', allowed_values=('false', 'true')))
-    if env['CPU'] == 'x86':
-        env = Environment(variables = vars, TARGET_ARCH='x86', MSVC_VERSION='${MSVC_VERSION}', ENV={'PATH': path})
-        print 'Building for 32 bit Windows'
-    elif env['CPU'] == 'x86_64':
-        env = Environment(variables = vars, TARGET_ARCH='x86_64', MSVC_VERSION='${MSVC_VERSION}', ENV={'PATH': path})
-        print 'Building for 64 bit Windows'
-    elif env['CPU'] == 'arm':
-        env = Environment(variables = vars, TARGET_ARCH='arm', MSVC_VERSION='${MSVC_VERSION}', ENV={'PATH': path})
-        print 'Building for ARM'		
-    else:
-        print 'Windows CPU must be x86, x86_64 or arm'
-        if not GetOption('help'):
-            Exit()
-elif env['OS'] == 'android':
-    env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar'], ENV={'PATH': path})
-else:
-    env = Environment(variables = vars, ENV={'PATH': path})
 
 # Make it a build error to build stand alone daemon on unsupported platforms
-if env['OS'] != 'android' and env['OS'] != 'linux' and env['OS'] != 'openwrt':
+if env['OS'] not in ['android', 'linux', 'openwrt']:
     if env['BD'] != "on":
         print "Stand alone daemon is not supported on OS=%s" % (env['OS'])
         if not GetOption('help'):
 	    Exit()
-	
+
+
 Help(vars.GenerateHelpText(env))
 
 # Validate build vars
@@ -118,11 +110,6 @@ if env['VARIANT'] == 'release':
     env.Append(CPPDEFINES = 'NDEBUG')
 
 env.Append(CPPDEFINES = ['QCC_OS_GROUP_%s' % env['OS_GROUP'].upper()])
-
-# Set JAVACLASSPATH to contents of CLASSPATH env variable
-env.AppendENVPath("JAVACLASSPATH", os.environ.get('CLASSPATH'))
-env['JAVACLASSPATH'] = env['ENV']['JAVACLASSPATH']
-
 
 # "Standard" C/C++ header file include paths for all projects.
 env.Append(CPPPATH = ["$DISTDIR/cpp/inc",
