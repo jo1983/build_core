@@ -217,6 +217,10 @@ statusBuilder = Builder(action = status_action,
                         src_suffix = '.xml')
 env.Append(BUILDERS = {'Status' : statusBuilder})
 
+if env['OS'] in ['linux', 'openwrt']:
+    env['LIBTYPE'] = 'both'
+else:
+    env['LIBTYPE'] = 'static'
 
 # Read OS and CPU specific SConscript file
 Export('env')

@@ -17,36 +17,41 @@ Import('env')
 import os
 
 # Linux specific flags
-env.Append(CPPDEFINES=['QCC_OS_LINUX'])
-env.Append(CPPDEFINES=['_GLIBCXX_USE_C99_FP_MACROS_DYNAMIC'])
+env.Append(CPPDEFINES = ['QCC_OS_LINUX'])
+env.Append(CPPDEFINES = ['_GLIBCXX_USE_C99_FP_MACROS_DYNAMIC'])
 
-env.Append(CFLAGS=['-Wall',
-                   '-Werror=non-virtual-dtor',
-                   '-pipe',
-                   '-std=c99',
-                   '-fno-strict-aliasing',
-                   '-Wno-long-long'])
-
-env.Append(CXXFLAGS=['-Wall',
+env.Append(CFLAGS = ['-Wall',
                      '-Werror=non-virtual-dtor',
                      '-pipe',
-                     '-std=gnu++0x',
-                     '-fno-exceptions',
+                     '-std=c99',
                      '-fno-strict-aliasing',
-                     '-Wno-long-long',
-                     '-Wno-deprecated'])
+                     '-fno-asynchronous-unwind-tables',
+                     '-fno-unwind-tables',
+                     '-ffunction-sections',
+                     '-fdata-sections',
+                     '-Wno-long-long'])
 
+env.Append(CXXFLAGS = ['-Wall',
+                       '-Werror=non-virtual-dtor',
+                       '-pipe',
+                       '-std=gnu++0x',
+                       '-fno-exceptions',
+                       '-fno-strict-aliasing',
+                       '-fno-asynchronous-unwind-tables',
+                       '-fno-unwind-tables',
+                       '-ffunction-sections',
+                       '-fdata-sections',
+                       '-Wno-long-long',
+                       '-Wno-deprecated'])
+
+env.Append(JAVACFLAGS = ['-Xlint', '-Xlint:-serial'])
 
 # Debug/Release Variants
 if env['VARIANT'] == 'debug':
-   env.Append(CFLAGS='-g')
-   env.Append(CXXFLAGS='-g')
-   env.Append(JAVACFLAGS='-g -Xlint -Xlint:-serial')
+   env.Append(CFLAGS = '-g')
+   env.Append(CXXFLAGS = '-g')
+   env.Append(JAVACFLAGS = '-g')
 else:
-   env.Append(CFLAGS='-Os')
-   env.Append(CXXFLAGS='-Os')
-   env.Append(LINKFLAGS='-s')
-   env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')
-   env.MergeFlags('-fvisibility=hidden -fvisibility-inlines-hidden')
-   env.MergeFlags('-fno-asynchronous-unwind-tables -fno-unwind-tables')
-   env.MergeFlags('-ffunction-sections -fdata-sections -Wl,--gc-sections')
+   env.Append(CFLAGS = '-Os')
+   env.Append(CXXFLAGS = '-Os')
+   env.Append(LINKFLAGS = ['-s', '-Wl,--gc-sections'])
