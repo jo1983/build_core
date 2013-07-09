@@ -55,6 +55,7 @@ elif platform.system() == 'Darwin':
 vars = Variables()
 
 # Common build variables
+vars.Add('V', 'Build verbosity', '0')
 vars.Add(EnumVariable('OS', 'Target OS', default_target_os, allowed_values = allowed_target_oss))
 vars.Add(EnumVariable('CPU', 'Target CPU', default_target_cpu, allowed_values = allowed_target_cpus))
 vars.Add(EnumVariable('VARIANT', 'Build variant', 'debug', allowed_values=('debug', 'release', 'Debug', 'Release')))
@@ -92,6 +93,18 @@ if target_os in ['win8', 'win7', 'winxp']:
 else:
     env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar'])
 
+if env['V'] == '0':
+    env.Replace(CCCOMSTR =     '\t[CC]      $SOURCE',
+                SHCCCOMSTR =   '\t[CC-SH]   $SOURCE',
+                CXXCOMSTR =    '\t[CXX]     $SOURCE',
+                SHCXXCOMSTR =  '\t[CXX-SH]  $SOURCE',
+                LINKCOMSTR =   '\t[LINK]    $TARGET',
+                SHLINKCOMSTR = '\t[LINK-SH] $TARGET',
+                JAVACCOMSTR =  '\t[JAVAC]   $SOURCE',
+                JARCOMSTR =    '\t[JAR]     $TARGET',
+                ARCOMSTR =     '\t[AR]      $TARGET',
+                RANLIBCOMSTR = '\t[RANLIB]  $TARGET'
+                )
 
 # Some tool aren't in default path
 if os.environ.has_key('JAVA_HOME'):
