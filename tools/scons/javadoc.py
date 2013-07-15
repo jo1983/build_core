@@ -78,7 +78,11 @@ def javadoc_generator(source, target, env, for_signature):
    javadoc_windowtitle = '-windowtitle \"%s\"' % (env['PROJECT_LONG_NAME'])
    javadoc_doctitle = '-doctitle \"%s<br/><h3>%s</h3>\"' % (env['PROJECT_LONG_NAME'], env['PROJECT_NUMBER'])
    javadoc_header = '-header \"<b>%s</b>\"' % (env['PROJECT_SHORT_NAME'])
-   javadoc_bottom = '-bottom \"' + "<small>%s %s ($(%s$))<br/>Copyright &copy; 2010-2013 Qualcomm Innovation Center, Inc.<br/>This document is licensed under a Creative Commons Attribution-Share Alike 3.0 Unported License; provided,<br/>that (i) any source code incorporated in this document is licensed under the Apache License version 2.0<br/>and (ii) <b>THIS DOCUMENT AND ALL INFORMATION CONTAIN HEREIN ARE PROVIDED ON AN \"AS-IS\" BASIS WITHOUT WARRANTY OF ANY KIND</b>.<br/><a href='http://creativecommons.org/licenses/by-sa/3.0'>Creative Commons Attribution-Share Alike 3.0 Unported License</a><br/><b>MAY CONTAIN U.S. AND INTERNATIONAL EXPORT CONTROLLED INFORMATION</b><br/></small>" % (env['PROJECT_LONG_NAME'], env['PROJECT_NUMBER'], datetime.now().strftime('%a %b %d %H:%M:%S %Y')) + '\"'
+   try:
+      copyright = env['PROJECT_COPYRIGHT']
+   except KeyError:
+      copyright = "Copyright &copy; 2010-2013 Qualcomm Innovation Center, Inc.<br/>This document is licensed under a Creative Commons Attribution-Share Alike 3.0 Unported License; provided,<br/>that (i) any source code incorporated in this document is licensed under the Apache License version 2.0<br/>and (ii) <b>THIS DOCUMENT AND ALL INFORMATION CONTAIN HEREIN ARE PROVIDED ON AN \"AS-IS\" BASIS WITHOUT WARRANTY OF ANY KIND</b>.<br/><a href='http://creativecommons.org/licenses/by-sa/3.0'>Creative Commons Attribution-Share Alike 3.0 Unported License</a><br/><b>MAY CONTAIN U.S. AND INTERNATIONAL EXPORT CONTROLLED INFORMATION</b>"
+   javadoc_bottom = '-bottom \"' + "<small>%s %s ($(%s$))<br/>%s<br/></small>" % (env['PROJECT_LONG_NAME'], env['PROJECT_NUMBER'], datetime.now().strftime('%a %b %d %H:%M:%S %Y'), copyright) + '\"'
    javadoc_overview = ''
    for s in source:
       try:
