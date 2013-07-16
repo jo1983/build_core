@@ -58,8 +58,9 @@ env.Append(LINKFLAGS=['/NODEFAULTLIB:libcmt.lib'])
 # a pdb file.  These are then resolved to a single pdb file by the linker.  
 # this also makes it possible to build using the -j option since files are no longer 
 # sharing a single pdb. 
-env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
-env['PDB'] = '${TARGET.base}.pdb'
+if env['VARIANT'] == 'debug':
+    env['CCPDBFLAGS'] = '/Zi /Fd${TARGET.base}.pdb'
+    env['PDB'] = '${TARGET.base}.pdb'
 
 # Archive expander
 def archive_expand(target, source, env):
