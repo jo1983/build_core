@@ -54,14 +54,16 @@ env.Append(CXXFLAGS=['/EHsc'])
 env.Append(LFLAGS=['/NODEFAULTLIB:libcmt.lib'])
 env.Append(LINKFLAGS=['/NODEFAULTLIB:libcmt.lib'])
 
-# This will cause Microsoft .pdb files to be generated for release and debug build
-# variants. The side effects of this options is that each .obj file will also generate
-# a pdb file.  These are then resolved to a single pdb file by the linker.  
-# this also makes it possible to build using the -j option since files are no longer 
-# sharing a single pdb. 
-env['CCPDBFLAGS'] = '/Zi /Fd${TARGET}.pdb'
-env['PDB'] = '${TARGET.base}.pdb'
-   
+# With a modern Microsoft compiler it is typical to use a pdb file i.e. the /Zi
+# or/ZI CCPDBFLAGS.  However in SCons a pdb file is created for each .obj file.
+# To be able to use the debug information we would have to copy all of the
+# pdb files (one for each C++ file) into the dist. SCons documentation recommends
+# using the /Z7 option to solve this problem.  Since another more acceptable
+# solution has not yet been found we are going with the recommendation from the
+# SCons documentation. 
+if env['VARIANT'] == 'debug':
+    env['CCPDBFLAGS'] = '/Z7'
+
 # Debug/Release variants
 if env['VARIANT'] == 'debug':
    # MSVC 2010 an newer require _ITERATOR_DEBUG_LEVEL specified to specify 
