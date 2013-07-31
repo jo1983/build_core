@@ -14,7 +14,14 @@
 #
 
 import os
+import platform
+
 Import('env')
+
+if platform.system() == 'Darwin':
+    # De-Mac-ify a couple of the envrionment variables.
+    env.Replace(SHLIBSUFFIX='.so')
+    env.Replace(SHLINKFLAGS=['$LINKFLAGS', '-shared'])
 
 # OpenWRT specific vars
 vars = Variables()
