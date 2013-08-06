@@ -88,21 +88,27 @@ Help(vars.GenerateHelpText(env))
 if env['OS'] == 'linux':
     env['OS_GROUP'] = 'posix'
     env['OS_CONF'] = 'linux'
+
 elif env['OS'] == 'win8': 
     env['OS_GROUP'] = 'winrt'
     env['OS_CONF'] = 'winrt'
-elif env['OS'] == 'win7' or env['OS'] == 'winxp':
+
+elif env['OS'] in ['win7', 'winxp']:
     env['OS_GROUP'] = 'windows'
     env['OS_CONF'] = 'windows'
+
 elif env['OS'] == 'android':
     env['OS_GROUP'] = 'posix'
     env['OS_CONF'] = 'android'
+
 elif env['OS'] == 'darwin':
     env['OS_GROUP'] = 'posix'
     env['OS_CONF'] = 'darwin'
+
 elif env['OS'] == 'openwrt':
     env['OS_GROUP'] = 'posix'
     env['OS_CONF'] = 'openwrt'
+
 else:
     print 'Unsupported OS/CPU combination'
     if not GetOption('help'):
@@ -116,6 +122,15 @@ env.Append(CPPDEFINES = ['QCC_OS_GROUP_%s' % env['OS_GROUP'].upper()])
 # Set JAVACLASSPATH to contents of CLASSPATH env variable
 env.AppendENVPath("JAVACLASSPATH", os.environ.get('CLASSPATH'))
 env['JAVACLASSPATH'] = env['ENV']['JAVACLASSPATH']
+
+
+# "Standard" C/C++ header file include paths for all projects.
+env.Append(CPPPATH = ["$DISTDIR/cpp/inc",
+                      "$DISTDIR/c/inc"])
+# "Standard" C/C++ library paths for all projects.
+env.Append(LIBPATH = ["$DISTDIR/cpp/lib",
+                      "$DISTDIR/c/lib"])
+
 
 # Setup additional builders
 if os.path.exists('tools/scons/doxygen.py'):
