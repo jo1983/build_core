@@ -26,6 +26,8 @@ if platform.system() == 'Linux':
         default_target_cpu = 'x86'
     allowed_target_cpus = ('x86', 'x86_64', 'arm', 'openwrt')
 
+    default_msvc_version = None
+
 elif platform.system() == 'Windows':
     default_target_os = 'win7'
     allowed_target_oss = ('winxp', 'win7', 'win8', 'android')
@@ -35,6 +37,8 @@ elif platform.system() == 'Windows':
     else:
         default_target_cpu = 'x86'
     allowed_target_cpus = ('x86', 'x86_64', 'arm')
+
+    default_msvc_version = '9.0'
 
 elif platform.system() == 'Darwin':
     default_target_os = 'darwin'
@@ -46,6 +50,7 @@ elif platform.system() == 'Darwin':
         default_target_cpu = 'x86'
     allowed_target_cpus = ('x86', 'arm', 'armv7', 'armv7s', 'openwrt')
 
+    default_msvc_version = None
 
 vars = Variables()
 
@@ -60,6 +65,10 @@ vars.Add(EnumVariable('DOCS', '''Output doc type. Setting the doc type to "dev" 
 vars.Add(EnumVariable('WS', 'Whitespace Policy Checker', 'check', allowed_values=('check', 'detail', 'fix', 'off')))
 vars.Add(PathVariable('GTEST_DIR', 'The path to Google Test (gTest) source code',  os.environ.get('GTEST_DIR'), PathVariable.PathIsDir))
 vars.Add(PathVariable('BULLSEYE_BIN', 'The path to Bullseye Code Coverage',  os.environ.get('BULLSEYE_BIN'), PathVariable.PathIsDir))
+
+if default_msvc_version:
+    vars.Add(EnumVariable('MSVC_VERSION', 'MSVC compiler version - Windows', default_msvc_version, allowed_values=('9.0', '10.0', '11.0', '11.0Exp')))
+
 
 # Standard variant directories
 build_dir = 'build/${OS}/${CPU}/${VARIANT}'
@@ -198,7 +207,10 @@ env.Append(BUILDERS = {'Status' : statusBuilder})
 
 # Read OS and CPU specific SConscript file
 Export('env')
-env.SConscript('conf/${OS_CONF}/${CPU}/SConscript')
+if target_os in ['win8', 'win7', 'winxp']:
+    env.SConscript('conf/${OS_CONF}/${CPU}/SConscript')
+else:
+    env.SConscript('conf/${OS_CONF}/${CPU}/SConscript')
 
 # Whitespace policy
 if env['WS'] != 'off' and not env.GetOption('clean'):
