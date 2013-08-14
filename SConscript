@@ -80,11 +80,8 @@ if target_os in ['win8', 'win7', 'winxp']:
     msvc_version = ARGUMENTS.get('MSVC_VERSION')
     env = Environment(variables = vars, TARGET_ARCH=target_cpu, MSVC_VERSION=msvc_version, tools = ['default', 'jar'])
 
-elif target_os == 'android':
-    env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar'])
-
 else:
-    env = Environment(variables = vars)
+    env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar'])
 
 
 # Some tool aren't in default path
