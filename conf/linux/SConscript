@@ -55,3 +55,5 @@ else:
    env.Append(CFLAGS = '-Os')
    env.Append(CXXFLAGS = '-Os')
    env.Append(LINKFLAGS = ['-s', '-Wl,--gc-sections'])
+
+env.SConscript('${CPU}/SConscript')

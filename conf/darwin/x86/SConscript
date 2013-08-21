@@ -16,9 +16,6 @@
 Import('env')
 import os
 
-# Import common linux setttings
-env.SConscript(['../SConscript'])
-
 s = os.environ.get('CONFIGURATION')
 s = s.lower()
 env['OBJDIR'] = 'build/${OS}/${CPU}/' + s + '/obj'

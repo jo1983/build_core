@@ -16,9 +16,6 @@
 Import('env')
 import os
 
-# Import common linux setttings
-env.SConscript(['../SConscript'])
-
 vars = Variables()
 vars.Add(PathVariable('SDKROOT', ' Base directory of Mac/iOS SDK for target', os.environ.get('SDKROOT')))
 vars.Add(PathVariable('SYSTEM_DEVELOPER_DIR', ' Base directory for developer tools', os.environ.get('SYSTEM_DEVELOPER_DIR')))

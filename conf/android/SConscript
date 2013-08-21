@@ -157,3 +157,5 @@ else:
    env.Append(CPPFLAGS=['-O3'])
    env.Append(LINKFLAGS='-s')
    env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')
+
+env.SConscript('${CPU}/SConscript')

@@ -45,3 +45,5 @@ else:
    env.Append(LINKFLAGS='-s')
    env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')
    print 'Using release settings for darwin build...'
+
+env.SConscript('${CPU}/SConscript')

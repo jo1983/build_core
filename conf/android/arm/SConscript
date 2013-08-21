@@ -16,9 +16,6 @@
 import os
 Import('env')
 
-# Import common android settings
-env.SConscript(['../SConscript'])
-
 # Arm specific compiler flags
 
 env.Append(CPPDEFINES=['QCC_CPU_ARM',

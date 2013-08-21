@@ -16,9 +16,6 @@
 Import('env')
 import os
 
-# Import common Linux setttings
-env.SConscript(['../SConscript'])
-
 # Linux specific flags
 env.Append(CPPDEFINES=['QCC_CPU_ARM'])
 env.Append(CPPFLAGS=['-march=armv6',

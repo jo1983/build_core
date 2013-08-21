@@ -18,7 +18,7 @@ import platform
 
 if platform.system() == 'Linux':
     default_target_os = 'linux'
-    allowed_target_oss = ('linux', 'android', 'maemo', 'openwrt')
+    allowed_target_oss = ('linux', 'android', 'openwrt')
 
     if platform.machine() == 'x86_64':
         default_target_cpu = 'x86_64'
@@ -44,10 +44,8 @@ elif platform.system() == 'Darwin':
     default_target_os = 'darwin'
     allowed_target_oss = ('darwin', 'android', 'openwrt')
 
-    if platform.machine() == 'x86_64':
-        default_target_cpu = 'x86_64'
-    else:
-        default_target_cpu = 'x86'
+    # Darwin maps both 32-bit and 64-bit x86 CPUs to "x86"
+    default_target_cpu = 'x86'
     allowed_target_cpus = ('x86', 'arm', 'armv7', 'armv7s', 'openwrt')
 
     default_msvc_version = None
@@ -225,10 +223,7 @@ else:
 
 # Read OS and CPU specific SConscript file
 Export('env')
-if target_os in ['win8', 'win7', 'winxp']:
-    env.SConscript('conf/${OS_CONF}/${CPU}/SConscript')
-else:
-    env.SConscript('conf/${OS_CONF}/${CPU}/SConscript')
+env.SConscript('conf/${OS_CONF}/SConscript')
 
 # Whitespace policy
 if env['WS'] != 'off' and not env.GetOption('clean'):
