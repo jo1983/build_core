@@ -13,84 +13,9 @@
 #    limitations under the License.
 # 
 
-import os
 Import('env')
 
-# Arm specific compiler flags
+# Arm specific flags
+env.Append(CPPDEFINES = 'QCC_CPU_ARM')
+env.Append(LINKFLAGS = '-Wl,--fix-cortex-a8')
 
-env.Append(CPPDEFINES=['QCC_CPU_ARM',
-                       '__ARM_ARCH_5__',
-                       '__ARM_ARCH_5T__',
-                       '__ARM_ARCH_5E__',
-                       '__ARM_ARCH_5TE__'])
-
-env.Append(CPPFLAGS=['-march=armv5te',
-                     '-mtune=xscale',
-                     '-mthumb'])
-
-# Use Android provided tools for Arm architecture
-if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
-   env['ANDROID_TOOLS'] = '$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/bin'
-   env['AR'] = '$ANDROID_TOOLS/arm-linux-androideabi-ar'
-   env['CC'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
-   env['CXX'] = '$ANDROID_TOOLS/arm-linux-androideabi-g++'
-   env['LINK'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
-else:
-   env['ANDROID_TOOLS'] = '$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/bin'
-   env['AR'] = '$ANDROID_TOOLS/arm-linux-androideabi-ar'
-   env['CC'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
-   env['CXX'] = '$ANDROID_TOOLS/arm-linux-androideabi-g++'
-   env['LINK'] = '$ANDROID_TOOLS/arm-linux-androideabi-gcc'
-
-# include paths
-if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
-   env.Append(CPPPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/include',
-                       #Using GNU STL.
-                       '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/include',
-                       '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/include/backward',
-                       '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi/include',
-                       '$ANDROID_SRC/external/bluetooth/bluez/include',
-                       '$ANDROID_SRC/external/openssl/include'])
-else:
-   env.Append(CPPPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/include',
-                       #Using GNU STL.
-                       '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/include',
-                       '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/include/backward',
-                       '$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi/include',
-                       '$ANDROID_SRC/external/bluetooth/bluez/include',
-                       '$ANDROID_SRC/external/openssl/include'])
-
-# library locations
-env.Append(LIBPATH=['$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
-env.Append(LIBPATH=['$ANDROID_SRC/out/target/product/$ANDROID_TARGET/system/lib'])
-
-if env.subst('$ANDROID_NDK_VERSION') in [ '7', '8' ]:
-   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/libs/armeabi'])
-   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.4.3/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.4.3/'])
-else:
-   env.Append(LIBPATH=['$ANDROID_NDK/sources/cxx-stl/gnu-libstdc++/4.6/libs/armeabi'])
-   env.Append(LIBPATH=['$ANDROID_NDK/toolchains/arm-linux-androideabi-4.6/prebuilt/$PREBUILT_HOST_OS/lib/gcc/arm-linux-androideabi/4.6.x-google/'])
-
-# link flags
-env.Append(LINKFLAGS=['--sysroot=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm',
-                      '-Wl,-rpath-link=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib'])
-
-# SCons default SHLINKFLAGS is '$LINKFLAGS -shared'.  Since we don't
-# want to pull in $LINKFLAGS, reset it here instead of Append().
-
-if env['VARIANT'] == 'debug':
-   stripomatic = ''
-else:
-   stripomatic = '-s'
-
-env['SHLINKFLAGS'] = ' '.join(['-Wl,-soname,${TARGET.file} '
-                               '-shared',
-                               '--sysroot=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm',
-                               '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libc.so',
-                               '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libstdc++.so',
-                               '$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib/libm.so',
-                               '-Wl,--fix-cortex-a8',
-                               '-Wl,--no-undefined',
-                               '-Wl,-z,noexecstack',
-                               '-Wl,-rpath-link=$ANDROID_NDK/platforms/android-$ANDROID_API_LEVEL_NDK/arch-arm/usr/lib',
-                               stripomatic])

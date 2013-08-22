@@ -14,72 +14,69 @@
 #
 
 import os
+import string
+import subprocess
+
+
+# Froyo is API level 8
+min_api_level = 8
+
 Import('env')
+
+env['ANDROID_STL'] = 'gnustl_static'
 
 # android specific vars
 vars = Variables()
-vars.Add(PathVariable('ANDROID_SRC', ' Base directory of Android source tree', os.environ.get('ANDROID_SRC')))
-vars.Add(PathVariable('ANDROID_NDK', ' Base directory of Android NDK', os.environ.get('ANDROID_NDK')))
-vars.Add(PathVariable('ANDROID_SDK', ' Base directory of Android SDK', os.environ.get('ANDROID_SDK')))
-vars.Add('ANDROID_TARGET', ' Target to be used for the build', os.environ.get('ANDROID_TARGET'))
-vars.Add(EnumVariable('ANDROID_API_LEVEL', ' Android API level (8, 9, 10, 14, 15 or 16)', 
-                      os.environ.get('ANDROID_API_LEVEL'), allowed_values=('8', '9', '10', '14', '15', '16', ''),  map={}, ignorecase=0))
-vars.Update(env)
-
-known_ndk_versions = [ '7',
-                       '8',
-                       '8b',
-                       '8c',
-                       '8d' ]
-
-# Determine Android NDK version
-if os.path.exists(env.subst('$ANDROID_NDK/RELEASE.TXT')):
-   relfile = open(os.path.join(env['ANDROID_NDK'], 'RELEASE.TXT'), 'r')
-   ndkVersion = relfile.readline().strip()[1:]
-else:
-   print 'Cannot determine Android NDK version'
-   if not GetOption('help'):
-      Exit()
-
-if ndkVersion not in known_ndk_versions:
-   print 'Unsupported Android NDK version'
-   if not GetOption('help'):
-      Exit()
-
-vars.Add(EnumVariable('ANDROID_NDK_VERSION', ' Android NDK Version number (7 through 8d)',
-                      ndkVersion, allowed_values=known_ndk_versions,  map={}, ignorecase=0))
+vars.Add(PathVariable('ANDROID_SRC', 'Base directory of Android source tree', os.environ.get('ANDROID_SRC')))
+vars.Add(PathVariable('ANDROID_NDK', 'Base directory of Android NDK', os.environ.get('ANDROID_NDK')))
+vars.Add(PathVariable('ANDROID_SDK', 'Base directory of Android SDK', os.environ.get('ANDROID_SDK')))
+vars.Add('ANDROID_TARGET', 'Target to be used for the build', os.environ.get('ANDROID_TARGET'))
 vars.Update(env)
 Help(vars.GenerateHelpText(env))
 
-missing_vars = False
 
 # Verify dependencies
-if '' == env.subst('$ANDROID_NDK'):
+if env.get('ANDROID_NDK', '') == '':
    print 'ANDROID_NDK variable is required'
    if not GetOption('help'):
-      missing_vars = True;
+      Exit()
 
-if '' == env.subst('$ANDROID_SRC'):
+if env.get('ANDROID_SRC', '') == '':
    print 'ANDROID_SRC variable is required'
    if not GetOption('help'):
-      missing_vars = True;
+      Exit()
 
-if '' == env.subst('$ANDROID_TARGET'):
+if env.get('ANDROID_TARGET', '') == '':
    env['ANDROID_TARGET'] = 'generic'
 
-if '' == env.subst('$ANDROID_API_LEVEL'):
-   env['ANDROID_API_LEVEL'] = '16'
 
+ndk_api_levels = set([ int(d.split('-')[-1]) for d in os.listdir(env['ANDROID_NDK'] + '/platforms') ])
+max_ndk_api_level = max(ndk_api_levels)
+if env.get('ANDROID_SDK', '') != '':
+   if max_ndk_api_level < min_api_level:
+      print 'Installed Android NDK does not support the minimum API level %d.' % min_api_level
+      if not GetOption('help'):
+         Exit()
 
-if missing_vars:
-   Exit()
+   min_ndk_api_level = min([ level for level in ndk_api_levels if level >= min_api_level ])
+   api_levels = [ level
+                  for level in set([ int(d.split('-')[-1]) for d in os.listdir(env['ANDROID_SDK'] + '/platforms') ])
+                  if level >= min_ndk_api_level ]
+
+   api_levels.sort()
+
+   vars2 = Variables()
+   vars2.Add('ANDROID_API_LEVEL', 'Android API level', os.environ.get('ANDROID_API_LEVEL', str(api_levels[-1])))
+   vars2.Update(env)
+   Help(vars2.GenerateHelpText(env))
+
 
 # Override MSVC build settings when building on windows.
 if 'win32' == env.subst('$HOST_OS'):
    env['OBJPREFIX']      = ''
    env['OBJSUFFIX']      = '.o'
    env['SHOBJPREFIX']    = '$OBJPREFIX'
-   env['SHOBJSUFFIX']    = '$OBJSUFFIX'
+   env['SHOBJSUFFIX']    = '.os'         # SCons uses ".os" for shared object files on Linux
    env['PROGPREFIX']     = ''
    env['PROGSUFFIX']     = ''
    env['LIBPREFIX']      = 'lib'
@@ -88,74 +85,82 @@ if 'win32' == env.subst('$HOST_OS'):
    env['SHLIBSUFFIX']    = '.so'
    env['LIBPREFIXES']    = [ '$LIBPREFIX' ]
    env['LIBSUFFIXES']    = [ '$LIBSUFFIX', '$SHLIBSUFFIX' ]
-   env['PREBUILT_HOST_OS'] = 'windows'
-else:
-   env['PREBUILT_HOST_OS'] = 'linux-x86'
 
-# Android specific compiler flags
-# These flags are copied from the Android NDK version r4.
-# CHANGING THESE COULD AFFECT COMPATIBILITY WITH THE NDK.
+if not GetOption('help') and env.has_key('ANDROID_NDK'):
+   abi_map = { 'arm': 'armeabi',
+               'mips': 'mips',
+               'x86': 'x86' }
+   curdir = env.Dir('.').srcnode()
 
-env.Append(CPPDEFINES=['QCC_OS_ANDROID',
-                       'ANDROID'])
 
-env.Append(CPPFLAGS=['-fpic',
-                     '-ffunction-sections',
-                     '-funwind-tables',
-                     '-fstack-protector',
-                     '-Wno-psabi',
-                     '-msoft-float',
-                     '-Os',
-                     '-fomit-frame-pointer',
-                     '-Wno-unused',
-                     '-Wa,--noexecstack'])
+   # Do a "test build" using ndk-build on our special Android.mk file to get
+   # the command line options used by Android when building code.
+   tb = subprocess.Popen([ env.subst('$ANDROID_NDK/ndk-build'),
+                           'APP_BUILD_SCRIPT=%s/Android.mk' % curdir,
+                           'NDK_PROJECT_PATH=%s' % curdir,
+                           'APP_ABI=%s' % abi_map[env['CPU']],
+                           'APP_STL=%s' % env['ANDROID_STL'],
+                           'APP_PLATFORM=android-%s' % str(max_ndk_api_level),
+                           '-n' ],
+                         stdout = subprocess.PIPE)
+   stdoutdata, stderrdata = tb.communicate()
 
-env.Append(CXXFLAGS=['-fno-exceptions',
-                     '-fno-rtti'])
+   # Message the output from ndk-build into a dictionary.
+   settings = dict( [ map(string.strip, line[4:].split('=', 1))
+                      for line in stdoutdata.split('\n')
+                      if line.startswith('AJ> ') ] )
 
-# More compiler flags that Alljoyn likes to see
-env.Append(CPPFLAGS=['-Wall', '-pipe'])
+   # Some versions of the Android NDK leave out
+   # .../gnu-libstdc++/<gcc-version>/include/backward include path so we need
+   # to add it if it is missing.  Also need to figure out where the STL
+   # library lives.
+   stl_lib_path = ''
+   inc_paths = map(string.strip, settings['INCLUDES'].split())
+   for ip in inc_paths:
+      bpath = ip + '/backward'
+      if bpath not in inc_paths and os.path.exists(bpath):
+         # Get the "backward" include path
+         inc_paths.append(bpath)
 
-# NDK version specific flags
-env.Append(CPPFLAGS=['-fno-strict-aliasing',
-                     '-funswitch-loops',
-                     '-finline-limit=300'])
+      if '/libs/' in ip:
+         # Get the STL library path
+         stl_lib_path = os.path.split(ip)[0]
 
-# Normalize NDK platform support (only certain ANDROID_API_LEVELs are directly supported)
-if int(env['ANDROID_API_LEVEL']) >= 14:
-   env['ANDROID_API_LEVEL_NDK'] = '14';
-elif int(env['ANDROID_API_LEVEL']) >= 9:
-   env['ANDROID_API_LEVEL_NDK'] = '9';
-else:
-   env['ANDROID_API_LEVEL_NDK'] = '8';
+   path = settings['TOOLCHAIN_PREBUILT_ROOT'] + '/bin'
+   prefix = settings['TOOLCHAIN_PREFIX'][len(path) + 1:]
 
-# Add Android SDK lib to CLASSPATH
-if '' != env.subst('$ANDROID_SDK'):
-   env.AppendENVPath("JAVACLASSPATH", [env.subst('$ANDROID_SDK/platforms/android-$ANDROID_API_LEVEL/android.jar')])
-   env['JAVACLASSPATH'] = env['ENV']['JAVACLASSPATH']
+   env['AR'] = prefix + 'ar'
+   env['CC'] = prefix + 'gcc'
+   env['CXX'] = prefix + 'g++'
+   env['LINK'] = prefix + 'gcc'
 
-# Android link flags
-env.Append(CXXFLAGS=['-Wno-deprecated'])
-env.Append(LINKFLAGS=['-Wl,--gc-sections',
-                      '-Wl,-z,nocopyreloc',
-                      '-Wl,--no-undefined',
-                      '-Wl,-z,noexecstack'])
+   env.PrependENVPath('PATH', path)
+   env.Append(CPPPATH = inc_paths)
+   env.AppendUnique(CFLAGS = settings['CFLAGS'].split())
+   env.AppendUnique(CXXFLAGS = settings['CXXFLAGS'].split())
+   env.AppendUnique(LINKFLAGS = settings['LDFLAGS'].split())
+   env.MergeFlags(env.ParseFlags(settings[env['VARIANT'] + '_FLAGS']))
+   env.Append(LIBPATH = [ settings['SYSROOT'] + '/usr/lib',
+                          stl_lib_path ])
+   env.Append(LINKFLAGS = [ '--sysroot=' + settings['SYSROOT'],
+                            '-Wl,-rpath-link=' + settings['SYSROOT'] + '/usr/lib' ])
 
-# SCons default SHLINKFLAGS is '$LINKFLAGS -shared'.  Since we don't
-# want to pull in $LINKFLAGS, reset it here instead of Append().
 
-if env['VARIANT'] == 'debug':
-   stripomatic = ''
-else:
-   stripomatic = '-s'
+   # Get OpenSSL from Android source.
+   env.Append(CPPPATH = '$ANDROID_SRC/external/openssl/include')
+   env.Append(LIBPATH = '$ANDROID_SRC/out/target/product/$ANDROID_TARGET/system/lib')
 
-# Debug/Release variants
-if env['VARIANT'] == 'debug':
-   env.Append(CPPFLAGS=['-O0', '-g'])
-   env.Append(JAVACFLAGS='-g -Xlint -Xlint:-serial')
-else:
-   env.Append(CPPFLAGS=['-O3'])
-   env.Append(LINKFLAGS='-s')
-   env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')
+   env.Append(CPPDEFINES = 'QCC_OS_ANDROID')
+   env.Append(CFLAGS = '-Wno-deprecated')
+   env.Append(CXXFLAGS = '-Wno-deprecated')
 
-env.SConscript('${CPU}/SConscript')
+   env.Append(LINKFLAGS = ['-Wl,--gc-sections', '-Wl,-z,nocopyreloc'])
+
+   # Debug/Release variants
+   if env['VARIANT'] == 'debug':
+      env.Append(JAVACFLAGS='-g -Xlint -Xlint:-serial')
+   else:
+      env.Append(LINKFLAGS='-s')
+      env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')
+
+   env.SConscript('${CPU}/SConscript')
