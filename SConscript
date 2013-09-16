@@ -181,6 +181,7 @@ else:
 env.Tool('genversion', toolpath=['tools/scons'])
 env.Tool('javadoc', toolpath=['tools/scons'])
 env.Tool('Csharp', toolpath=['tools/scons'])
+env.Tool('jsdoc2', toolpath=['tools/scons'])
 
 # Create the builder that generates Status.h from Status.xml
 import sys
