@@ -129,6 +129,13 @@ def _doxygen_emitter(target, source, env):
         if os.path.isdir(output_directory_from_config):
             output_directory = output_directory_from_config
 
+    # Some versions of doxygen will fail to create the output directory if it does
+    # not already exist. And will report that the directory does not exist and
+    # cannot be created.  This will by pass this error by creating the dictionary
+    # for doxygen
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
     ############################################################################
     # PROCESS INPUT FILES
     ############################################################################
