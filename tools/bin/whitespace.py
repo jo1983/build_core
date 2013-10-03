@@ -16,9 +16,11 @@
 #
 
 import sys, os, fnmatch, re, filecmp, difflib, textwrap
+import hashlib, pickle, time
 from subprocess import Popen, STDOUT, PIPE
 
 def main(argv=None):
+    start_time = time.clock()
     dir_ignore = ["stlport", "build", ".git", ".repo", "alljoyn_objc", "win8_apps",]
     file_ignore_patterns = ['\.#.*', 'alljoyn_java\.h', 'Status\.h', 'Status_CPP0x\.h', 'Internal\.h']
     file_patterns = ['*.c', '*.h', '*.cpp', '*.cc']
@@ -28,6 +30,29 @@ def main(argv=None):
     unc_suffix = ".uncrustify"
     wscfg = None
     xit=0
+    sha_hash = hashlib.sha1()
+    whitespace_db = {}
+    whitespace_db_updated = False
+    run_ws_check = True
+
+    # try an load the whitespace.db file.  The file is dictionary of key:value pairs
+    # where the key is the name of a file that has been checked by the WS checker
+    # and the value is a sha1 blob calculated for the file.  specified for the key
+    # if the key is not found (i.e. a new file or first time this script has been
+    # run) then the key will be added.  If the  file fails the WS check it will be
+    # removed from the dictionary.  If the file is new or the calculated hash has
+    # changed the WS checker will check the file to see if it complies with the WS
+    # rules.
+    try:
+        f = open('whitespace.db', 'r')
+        try:
+            whitespace_db = pickle.load(f)
+        except pickle.UnpicklingError:
+            os.remove('whitespace.db')
+        finally:
+            f.close()
+    except IOError:
+        print 'whitespace.db not found a new one will be created.'
 
     if argv is None:
         argv=[]
@@ -77,64 +102,105 @@ def main(argv=None):
 
     '''Get a list of source files and apply uncrustify to them'''
     for srcfile in locate(file_patterns, file_ignore_patterns, dir_ignore):
-        uncfile = srcfile + unc_suffix
+        f = open(srcfile, 'rb')
+        filesize = os.path.getsize(srcfile)
+        sha_digest = None
+        try:
+            # Compute the sha tag for the file the same way as git computes sha
+            # tags this prevents whitespace changes being ignored.
+            sha_hash.update("blob %u\0" % filesize)
+            sha_hash.update(f.read())
+            sha_digest = sha_hash.hexdigest()
+        finally:
+            f.close()
 
-        '''Run uncrustify and generate uncrustify output file'''
-        Popen(["uncrustify", "-q", "-c",
-            uncrustify_config, srcfile], stdout=PIPE).communicate()[0]
-
-        '''check command'''
-        if wscmd == valid_commands[0]:
-
-            '''If the src file and the uncrustify file are different
-            then print the filename'''
-            if not filecmp.cmp(srcfile, uncfile, False):
-                print srcfile
-                xit=1
-
-        '''detail command'''
-        if wscmd == valid_commands[1]:
-
-            '''If the src file and the uncrustify file are different
-            then diff the files'''
-            if not filecmp.cmp(srcfile, uncfile, False):
-                print ''
-                print '******** FILE: ' + srcfile
-                print ''
-                print '******** BEGIN DIFF ********'
-
-                fromlines = open(srcfile, 'U').readlines()
-                tolines = open(uncfile, 'U').readlines()
-                diff = difflib.unified_diff(fromlines, tolines, n=0)
-                sys.stdout.writelines(diff)
-
-                print ''
-                print '********* END DIFF *********'
-                print ''
-                xit=1
-
-        '''fix command'''
-        if wscmd == valid_commands[2]:
-
-            '''If the src file and the uncrustify file are different
-            then print the filename so that the user can see what will
-            be fixed'''
-            if not filecmp.cmp(srcfile, uncfile, False):
-                print srcfile
-
-            '''run uncrustify again and overwrite the non-compliant file with
-            the uncrustify output'''
-            Popen(["uncrustify", "-q", "-c",
-                    uncrustify_config, "--no-backup",
-                    srcfile], stdout=PIPE).communicate()[0]
-
-        '''remove the uncrustify output file'''
-        if os.path.exists(uncfile):
+        if sha_digest != None:
             try:
-                os.remove(uncfile)
-            except OSError:
-                print "Unable to remove uncrustify output file: " + uncfile
+                if whitespace_db[srcfile] == sha_digest:
+                    run_ws_check = False
+                else:
+                    whitespace_db[srcfile] = sha_digest
+                    run_ws_check = True
+                    whitespace_db_updated = True
+            except KeyError:
+                whitespace_db[srcfile] = sha_digest
+                run_ws_check = True
+                whitespace_db_updated = True
 
+        if run_ws_check:
+            uncfile = srcfile + unc_suffix
+
+            '''Run uncrustify and generate uncrustify output file'''
+            Popen(["uncrustify", "-q", "-c",
+                uncrustify_config, srcfile], stdout=PIPE).communicate()[0]
+
+            '''check command'''
+            if wscmd == valid_commands[0]:
+
+                '''If the src file and the uncrustify file are different
+                then print the filename'''
+                if not filecmp.cmp(srcfile, uncfile, False):
+                    print srcfile
+                    del whitespace_db[srcfile]
+                    xit=1
+
+            '''detail command'''
+            if wscmd == valid_commands[1]:
+
+                '''If the src file and the uncrustify file are different
+                then diff the files'''
+                if not filecmp.cmp(srcfile, uncfile, False):
+                    print ''
+                    print '******** FILE: ' + srcfile
+                    print ''
+                    print '******** BEGIN DIFF ********'
+
+                    fromlines = open(srcfile, 'U').readlines()
+                    tolines = open(uncfile, 'U').readlines()
+                    diff = difflib.unified_diff(fromlines, tolines, n=0)
+                    sys.stdout.writelines(diff)
+
+                    print ''
+                    print '********* END DIFF *********'
+                    print ''
+                    del whitespace_db[srcfile]
+                    xit=1
+
+            '''fix command'''
+            if wscmd == valid_commands[2]:
+
+                '''If the src file and the uncrustify file are different
+                then print the filename so that the user can see what will
+                be fixed'''
+                if not filecmp.cmp(srcfile, uncfile, False):
+                    print srcfile
+                    del whitespace_db[srcfile]
+
+                '''run uncrustify again and overwrite the non-compliant file with
+                the uncrustify output'''
+                Popen(["uncrustify", "-q", "-c",
+                        uncrustify_config, "--no-backup",
+                        srcfile], stdout=PIPE).communicate()[0]
+
+            '''remove the uncrustify output file'''
+            if os.path.exists(uncfile):
+                try:
+                    os.remove(uncfile)
+                except OSError:
+                    print "Unable to remove uncrustify output file: " + uncfile
+
+    # write the whitespace_db to a file so it is avalible next time the whitespace
+    # checker is run.
+    if whitespace_db_updated:
+        try:
+            f = open('whitespace.db', 'w')
+            try:
+                pickle.dump(whitespace_db, f)
+            finally:
+                f.close()
+        except IOError:
+            print 'Unable to create whitespace.db file.'
+    print 'WS total run time: {0:.2f} seconds'.format(time.clock() - start_time)
     return xit
 
 '''Return the uncrustify version number'''

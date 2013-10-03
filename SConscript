@@ -240,6 +240,8 @@ if env['WS'] != 'off' and not env.GetOption('clean'):
         print "Note: enter 'scons -h' to see whitespace (WS) options"
         return whitespace.main([env['WS'],])
 
-    env.Command('#/ws', Dir('$DISTDIR'), wsbuild)
+    ws = env.Command('#/ws', Dir('$DISTDIR'), wsbuild)
+if env['WS'] != 'off':
+    env.Clean(env.File('SConscript'), env.File('#/whitespace.db'))
 
 Return('env')
