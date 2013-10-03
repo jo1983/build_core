@@ -32,6 +32,14 @@ env.Append(CPPDEFINES=['QCC_CPU_X86',
                        '_UNICODE',
                        'WIN32_LEAN_AND_MEAN'])
 
+# Visual Studio compiler complains that functions like strncpy are unsafe. We
+# are aware that its possible to create a non-nul terminated string using the
+# strncpy function.  However, we cannot use the strncpy_s functions as VC++
+# suggests. Our code must work with a lot of different compilers so we cannot
+# use compiler specific code like strncpy_s. This will prevent visual studio
+# from giving errors we cannot do anything about.
+env.Append(CPPDEFINES=['_CRT_SECURE_NO_WARNINGS'])
+
 # Set MS OS version number
 if env['OS'] == 'win7':
     # Windows 7
@@ -42,7 +50,15 @@ elif env['OS'] == 'winxp':
     env.Append(CPPDEFINES=[('NTDDI_VERSION', '0x05010300')])
                                
 #Suppress specific warnings
-env.Append(CXXFLAGS=['/wd4355'])
+# C4345 warning specifying that the later versions of MSVC initialize POD types
+#       (Plan Old Data) This warning is designed to inform users that the behavior
+#       changed from older compilers.  This warning is only encountered by 
+#       common/src/String.cc and does not effect AllJoyn.
+#       see http://msdn.microsoft.com/en-us/library/wewb47ee.aspx
+# C4355 "'this' used in base member initializer list"' Depending on the version of
+#       the MSVC compiler this warning may or may not be shut off by default.
+#       http://msdn.microsoft.com/en-us/library/3c594ae3.aspx
+env.Append(CXXFLAGS=['/wd4345', '/wd4355'])
 
 env.Append(CFLAGS=['/nologo', '/vmm', '/vmg'])
 env.Append(CXXFLAGS=['/nologo', '/vmm', '/vmg'])
@@ -72,7 +88,7 @@ if env['VARIANT'] == 'debug':
    # (/MDd') to prevent build errors. 
    env.Append(CPPDEFINES=['_DEBUG', ('_ITERATOR_DEBUG_LEVEL', 2)])
    env.Append(CFLAGS=['/MDd', '/Od'])
-   env.Append(CXXFLAGS=['/MDd', '/Od', '/Gd', '/Ob1'])
+   env.Append(CXXFLAGS=['/MDd', '/Od', '/Gd', '/Ob1', '/W2'])
    env.Append(LINKFLAGS=['/debug'])
    env.Append(JAVACFLAGS='-g -Xlint -Xlint:-serial')
 else:
@@ -80,7 +96,7 @@ else:
    if env['MSVC_VERSION'] >= '10.0':
        env.Append(CPPDEFINES=[('_ITERATOR_DEBUG_LEVEL', 0)])
    env.Append(CFLAGS=['/MD', '/Gy', '/O1', '/Ob2', '/Gd'])
-   env.Append(CXXFLAGS=['/MD', '/Gy', '/O1', '/Ob2'])
+   env.Append(CXXFLAGS=['/MD', '/Gy', '/O1', '/Ob2', '/W2'])
    env.Append(LINKFLAGS=['/opt:ref'])
    env.Append(JAVACFLAGS='-Xlint -Xlint:-serial')
 
