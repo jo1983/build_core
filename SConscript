@@ -85,11 +85,15 @@ if target_os in ['win8', 'win7', 'winxp']:
     if target_os == 'win8':
         vars.Add(EnumVariable('APPX_CXXFLAGS', 'Include appx dependencies', 'true', allowed_values=('false', 'true')))
 
+    path = []
+    if os.environ.has_key('MIKTEX_HOME'):
+        path = os.path.normpath(os.environ['MIKTEX_HOME'] + '/bin')
+
     msvc_version = ARGUMENTS.get('MSVC_VERSION')
-    env = Environment(variables = vars, TARGET_ARCH=target_cpu, MSVC_VERSION=msvc_version, tools = ['default', 'jar'])
+    env = Environment(variables = vars, TARGET_ARCH=target_cpu, MSVC_VERSION=msvc_version, tools = ['default', 'jar'], ENV = {'PATH' : path})
 
 else:
-    env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar'])
+    env = Environment(variables = vars, tools = ['gnulink', 'gcc', 'g++', 'ar', 'as', 'javac', 'javah', 'jar', 'pdf', 'pdflatex'])
 
 if env['V'] == '0':
     env.Replace(CCCOMSTR =     '\t[CC]      $SOURCE',

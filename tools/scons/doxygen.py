@@ -103,8 +103,11 @@ def _doxygen_emitter(target, source, env):
         print('           source files are ignored.')
 
     config = ConfigParser.SafeConfigParser()
-    fp = open(str(source[0]), 'r')
-    config.readfp(FakeSecHead(fp))
+    try:
+        fp = open(str(source[0]), 'r')
+        config.readfp(FakeSecHead(fp))
+    finally:
+        fp.close()
 
     config_file_path = os.path.abspath(os.path.dirname(str(source[0])))
 
@@ -112,12 +115,14 @@ def _doxygen_emitter(target, source, env):
     input = []
 
     generate_html = True
+    generate_latex = True
 
     example_path = []
     example_patterns = []
     example_recursive = False
     output_directory = config_file_path
     html_output = 'html'
+    latex_output = 'latex'
 
     if config.has_option('doxy_config', 'output_directory'):
         output_directory_from_config = config.get('doxy_config', 'output_directory')
@@ -134,7 +139,9 @@ def _doxygen_emitter(target, source, env):
     # cannot be created.  This will by pass this error by creating the dictionary
     # for doxygen
     if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+        output_directory_from_config = config.get('doxy_config', 'output_directory')
+        output_directory_from_config = _doxygen_expand_environment_vars(output_directory_from_config, env)
+        env.Mkdir(output_directory_from_config)
 
     ############################################################################
     # PROCESS INPUT FILES
@@ -234,7 +241,7 @@ def _doxygen_emitter(target, source, env):
     # PROCESS HTML TAGS
     ############################################################################
     if config.has_option('doxy_config', 'generate_html'):
-        if config.get('doxy_config', 'recursive') == 'NO':
+        if config.get('doxy_config', 'generate_html') == 'NO':
             generate_html = False
 
     if generate_html:
@@ -322,6 +329,51 @@ def _doxygen_emitter(target, source, env):
             if os.path.isfile('DoxygenLayout.xml'):
                 source.append(os.path.abspath('DoxygenLayout.xml'))
 
+    ############################################################################
+    # PROCESS LATEX / PDF input
+    ############################################################################
+    if config.has_option('doxy_config', 'generate_latex'):
+        if config.get('doxy_config', 'generate_latex') == 'NO':
+            generate_latex = False
+
+    if generate_latex:
+        if config.has_option('doxy_config', 'latex_header'):
+            latex_header = config.get('doxy_config', 'latex_header')
+            latex_header = _doxygen_expand_environment_vars(latex_header, env)
+            latex_header = _doxygen_replace_start_hash_if_found(latex_header, env)
+            # relative paths are relative to the location of the config file
+            if not os.path.isabs(latex_header):
+                html_header = os.path.join(config_file_path, latex_header)
+            if os.path.isfile(latex_header):
+                source.append(os.path.abspath(latex_header))
+        if config.has_option('doxy_config', 'latex_footer'):
+            latex_footer = config.get('doxy_config', 'latex_footer')
+            latex_footer = _doxygen_expand_environment_vars(latex_footer, env)
+            latex_footer = _doxygen_replace_start_hash_if_found(latex_footer, env)
+            # relative paths are relative to the location of the config file
+            if not os.path.isabs(latex_footer):
+                latex_footer = os.path.join(config_file_path, latex_footer)
+            if os.path.isfile(latex_footer):
+                source.append(os.path.abspath(latex_footer))
+        if config.has_option('doxy_config', 'latex_extra_files'):
+            latex_extra_files = config.get('doxy_config', 'latex_extra_files').replace('\\', '').split()
+            for lef in latex_extra_files:
+                 lef = _doxygen_expand_environment_vars(lef, env)
+                 lef = _doxygen_replace_start_hash_if_found(lef, env)
+                 # relative paths are relative to the location of the config file
+                 if not os.path.isabs(lef):
+                     lef = os.path.join(config_file_path, lef)
+                 if os.path.isfile(lef):
+                     source.append(os.path.abspath(lef))
+        if config.has_option('doxy_config', 'latex_output'):
+            latex_output_from_config = config.get('doxy_config', 'latex_output')
+            latex_output_from_config = _doxygen_expand_environment_vars(latex_output_from_config, env)
+            latex_output_from_config = _doxygen_replace_start_hash_if_found(latex_output_from_config, env)
+            if latex_output_from_config:
+                latex_output = latex_output_from_config
+            target.append(env.Dir(os.path.abspath(os.path.join(output_directory, latex_output))))
+            env.Clean(source, env.Dir(os.path.abspath(os.path.join(output_directory, latex_output))))
+
     # TODO list of tags that effect the source and target list that are not 
     #    processed. Since none of our config files currently use these tags not 
     #    processing them should not affect the output. If any of these tags are
@@ -348,12 +400,6 @@ def _doxygen_emitter(target, source, env):
     #    USE_MATHJAX
     #    MATHJAX_RELPATH
     #    MATHJAX_CODEFILE
-    #    GENERATE_LATEX
-    #    LATEX_OUTPUT
-    #    EXTRA_PACKAGES
-    #    LATEX_HEADER
-    #    LATEX_FOOTER
-    #    LATEXT_EXTRA_FILES
     #    GENERATE_RTF
     #    RTF_OUTPUT
     #    RTF_STYLESHEET_FILE
@@ -388,8 +434,8 @@ def generate(env):
     # Add Builders for the Doxygen documentation tool
     import SCons.Builder
     doxygen_builder = SCons.Builder.Builder(
-        action = "cd ${SOURCE.dir}  &&  ${DOXYGEN} ${SOURCE.file}",
-        emitter = _doxygen_emitter
+        action = '${DOXYGENCOM}',
+        emitter = _doxygen_emitter,
     )
 
     env.Append(BUILDERS = {
@@ -398,6 +444,8 @@ def generate(env):
 
     env.AppendUnique(
         DOXYGEN = 'doxygen',
+        DOXYGENFLAGS = '',
+        DOXYGENCOM = 'cd ${SOURCE.dir} && ${DOXYGEN} ${DOXYGENFLAGS} ${SOURCE.file}'
     )
 
 def exists(env):
