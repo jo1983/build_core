@@ -26,7 +26,7 @@ Help(vars.GenerateHelpText(env))
 if '' == env.subst('$SDKROOT'):
    print 'SDKROOT variable is required'
    if not GetOption('help'):
-      Exit()
+      Exit(1)
 
 if '' == env.subst('$SYSTEM_DEVELOPER_DIR'):
     env['SYSTEM_DEVELOPER_DIR'] = '/Developer'

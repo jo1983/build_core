@@ -39,12 +39,12 @@ Help(vars.GenerateHelpText(env))
 if env.get('ANDROID_NDK', '') == '':
    print 'ANDROID_NDK variable is required'
    if not GetOption('help'):
-      Exit()
+      Exit(1)
 
 if env.get('ANDROID_SRC', '') == '':
    print 'ANDROID_SRC variable is required'
    if not GetOption('help'):
-      Exit()
+      Exit(1)
 
 if env.get('ANDROID_TARGET', '') == '':
    env['ANDROID_TARGET'] = 'generic'
@@ -56,7 +56,7 @@ if env.get('ANDROID_SDK', '') != '':
    if max_ndk_api_level < min_api_level:
       print 'Installed Android NDK does not support the minimum API level %d.' % min_api_level
       if not GetOption('help'):
-         Exit()
+         Exit(1)
 
    min_ndk_api_level = min([ level for level in ndk_api_levels if level >= min_api_level ])
    api_levels = [ level

@@ -121,7 +121,7 @@ if env['OS'] not in ['android', 'linux', 'openwrt']:
     if env['BD'] != "on":
         print "Stand alone daemon is not supported on OS=%s" % (env['OS'])
         if not GetOption('help'):
-	    Exit()
+            Exit(1)
 
 
 Help(vars.GenerateHelpText(env))
@@ -154,7 +154,7 @@ elif env['OS'] == 'openwrt':
 else:
     print 'Unsupported OS/CPU combination'
     if not GetOption('help'):
-        Exit()
+        Exit(1)
 
 if env['VARIANT'] == 'release':
     env.Append(CPPDEFINES = 'NDEBUG')

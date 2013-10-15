@@ -30,7 +30,7 @@ Help(vars.GenerateHelpText(env))
 if '' == env.subst('$OE_BASE'):
    print 'OE_BASE variable is required for Linux/ARM builds'
    if not GetOption('help'):
-      Exit()
+      Exit(1)
 
 # Use OpenEmbedded tools
 gcc_prefix  = '$OE_BASE/bin/arm-angstrom-linux-gnueabi-'
